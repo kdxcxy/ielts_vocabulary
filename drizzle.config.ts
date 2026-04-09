@@ -6,3 +6,4 @@ export default {
   dialect: 'sqlite',
   driver: 'd1-http',
 } satisfies Config
+ 
