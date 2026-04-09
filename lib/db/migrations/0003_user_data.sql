@@ -1,0 +1,20 @@
+-- 创建收藏表
+CREATE TABLE IF NOT EXISTS bookmarks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  word_id INTEGER NOT NULL,
+  story_id INTEGER,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建学习进度表
+CREATE TABLE IF NOT EXISTS learning_progress (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  story_id INTEGER NOT NULL,
+  mode TEXT NOT NULL,
+  completed_words TEXT DEFAULT '[]',
+  correct_count INTEGER DEFAULT 0,
+  wrong_count INTEGER DEFAULT 0,
+  last_read_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
