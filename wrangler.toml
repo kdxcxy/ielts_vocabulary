@@ -9,3 +9,5 @@ database_id = "xxxx-xxxx-xxxx"
 [[r2_buckets]]
 binding = "STORAGE"
 bucket_name = "ielts-vocab-assets"
+
+
