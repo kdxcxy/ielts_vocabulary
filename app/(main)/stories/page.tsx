@@ -1,7 +1,8 @@
 'use client'
+
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
-import { Search, ChevronRight } from 'lucide-react'
+import { ChevronRight, Search } from 'lucide-react'
 
 interface Story {
   id: number
@@ -39,74 +40,77 @@ export default function StoriesPage() {
   useEffect(() => {
     const url = activeCategory === 0 ? '/api/stories' : `/api/stories?categoryId=${activeCategory}`
     fetch(url)
-      .then(res => res.json())
-      .then(data => setStories(data.data || []))
+      .then((res) => res.json())
+      .then((data) => setStories(data.data || []))
   }, [activeCategory])
 
-  const filtered = stories.filter(s => s.title.includes(searchText))
+  const filtered = stories.filter((story) => story.title.includes(searchText))
 
   return (
-    <div className="min-h-screen bg-surface pb-20">
-      {/* 顶部 */}
-      <div className="bg-gradient-to-br from-primary to-primary-container px-6 pt-14 pb-8">
-        <h1 className="text-2xl font-bold text-white mb-4">故事列表</h1>
-        {/* 搜索框 */}
-        <div className="bg-white/20 backdrop-blur-sm rounded-full flex items-center px-4 py-3">
-          <Search className="w-5 h-5 text-white/70 mr-3" />
-          <input
-            type="text"
-            placeholder="搜索故事..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="bg-transparent text-white placeholder:text-white/60 text-sm flex-1 focus:outline-none"
-          />
+    <div className="h-screen flex flex-col bg-surface">
+      <div className="flex-shrink-0">
+        <div className="bg-gradient-to-br from-primary to-primary-container px-6 pt-14 pb-8">
+          <h1 className="mb-4 text-2xl font-bold text-white">故事列表</h1>
+          <div className="flex items-center rounded-full bg-white/20 px-4 py-3 backdrop-blur-sm">
+            <Search className="mr-3 h-5 w-5 text-white/70" />
+            <input
+              type="text"
+              placeholder="搜索故事..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="flex-1 bg-transparent text-sm text-white placeholder:text-white/60 focus:outline-none"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* 分类标签 */}
-      <div className="px-6 -mt-4 mb-4">
-        <div className="bg-surface-container-lowest rounded-2xl p-3 shadow-lg">
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
-                  activeCategory === cat.id
-                    ? 'bg-gradient-to-r from-primary to-primary-container text-white shadow-md'
-                    : 'bg-surface-container text-on-surface/70'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+        <div className="-mt-4 mb-4 px-6">
+          <div className="rounded-2xl bg-surface-container-lowest p-3 shadow-lg">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                    activeCategory === cat.id
+                      ? 'bg-gradient-to-r from-primary to-primary-container text-white shadow-md'
+                      : 'bg-surface-container text-on-surface/70'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 故事列表 */}
-      <div className="px-6 space-y-3">
-        {filtered.map((story, i) => (
-          <a
-            key={story.id}
-            href={`/stories/${story.id}`}
-            className="block bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-center p-4">
-              {/* 左侧渐变色块 */}
-              <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} flex-shrink-0 flex items-center justify-center mr-4`}>
-                <span className="text-white text-2xl font-bold">{story.id}</span>
+      <div className="flex-1 overflow-y-auto px-6 pb-20">
+        <div className="space-y-3">
+          {filtered.map((story, i) => (
+            <a
+              key={story.id}
+              href={`/stories/${story.id}`}
+              className="block overflow-hidden rounded-2xl bg-surface-container-lowest shadow-sm transition-shadow hover:shadow-md"
+            >
+              <div className="flex items-center p-4">
+                <div
+                  className={`mr-4 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${
+                    gradients[i % gradients.length]
+                  }`}
+                >
+                  <span className="text-2xl font-bold text-white">{story.id}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-sm font-bold text-on-surface">{story.title}</h3>
+                  <p className="mt-1 text-xs text-on-surface/50">{story.wordCount} 个词汇</p>
+                </div>
+                <ChevronRight className="ml-2 h-5 w-5 flex-shrink-0 text-on-surface/30" />
               </div>
-              {/* 右侧内容 */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-sm text-on-surface truncate">{story.title}</h3>
-                <p className="text-xs text-on-surface/50 mt-1">{story.wordCount} 个词汇</p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-on-surface/30 flex-shrink-0 ml-2" />
-            </div>
-          </a>
-        ))}
+            </a>
+          ))}
+        </div>
       </div>
+
       <BottomNav />
     </div>
   )

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
 import { Search, Trash2, Volume2, BookOpen } from 'lucide-react'
+import { TOKEN_STORAGE_KEY } from '@/lib/constants'
 
 interface Bookmark {
   id: number
@@ -15,7 +16,7 @@ export default function BookmarksPage() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
     fetch('/api/bookmarks', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -29,7 +30,7 @@ export default function BookmarksPage() {
   )
 
   const handleRemove = async (id: number) => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
     await fetch(`/api/bookmarks/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }

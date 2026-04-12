@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { JSX } from 'react'
 import { ArrowLeft, Bookmark, Volume2, Share2, BookOpen, Pen, Brain } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
+import { TOKEN_STORAGE_KEY } from '@/lib/constants'
 
 type Mode = 'read' | 'recall' | 'apply'
 
@@ -35,7 +36,7 @@ export default function StoryReadPage({ params }: { params: Promise<{ id: string
   }, [params])
 
   const handleBookmark = () => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
     if (bookmarked) {
       fetch('/api/bookmarks', {
         method: 'DELETE',
@@ -136,21 +137,23 @@ export default function StoryReadPage({ params }: { params: Promise<{ id: string
       <div className="flex-shrink-0">
         {/* 顶部导航 */}
         <div className="bg-gradient-to-br from-primary to-primary-container px-4 pt-14 pb-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <a href="/stories" className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center">
+              <a href="/stories" className="w-10 h-10 shrink-0 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
                 <ArrowLeft className="w-5 h-5 text-white" />
               </a>
-              <h1 className="text-lg font-bold text-white truncate max-w-[200px]">{story.title}</h1>
+              <h1 className="text-base leading-snug font-bold text-white break-words whitespace-normal">
+                {story.title}
+              </h1>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2 shrink-0">
               <button onClick={handleBookmark} className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                 <Bookmark className={`w-5 h-5 ${bookmarked ? 'text-yellow-300 fill-yellow-300' : 'text-white'}`} />
               </button>
               <button className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                 <Share2 className="w-5 h-5 text-white" />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
 
