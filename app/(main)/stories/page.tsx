@@ -16,7 +16,7 @@ const categories = [
   { id: 1, name: '霸道总裁', icon: null },
   { id: 2, name: '都市言情', icon: null },
   { id: 3, name: '现代甜宠', icon: null },
-  { id: 4, name: '玄幻修仙', icon: null },
+  { id: 4, name: '玄幻仙侠', icon: null },
   { id: 5, name: '科幻', icon: null },
 ]
 

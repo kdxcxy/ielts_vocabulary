@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import type { JSX } from 'react'
 import { ArrowLeft, Bookmark, Volume2, Share2, BookOpen, Pen, Brain } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 
@@ -51,7 +52,7 @@ export default function StoryReadPage({ params }: { params: Promise<{ id: string
     
     return paragraphs.map((para, pIndex) => {
       // 匹配格式：word [中文]
-      const regex = /(\S+)\s+\[([^\]]+)\]/g
+      const regex = /([A-Za-z][A-Za-z.\/-]*(?:\s+[A-Za-z][A-Za-z.\/-]*)*)\s+\[([^\]]+)\]/g
       const parts: JSX.Element[] = []
       let lastIndex = 0
       let match

@@ -6,7 +6,7 @@ const categoryMap: Record<string, number> = {
   '霸道总裁': 1,
   '都市言情': 2,
   '现代甜宠': 3,
-  '玄幻修仙': 4,
+  '玄幻仙侠': 4,
   '科幻': 5
 }
 

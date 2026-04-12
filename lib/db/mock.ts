@@ -7,7 +7,7 @@ const categories = [
   { id: 1, name: '霸道总裁', slug: 'ceo', icon: '💼' },
   { id: 2, name: '都市言情', slug: 'urban', icon: '💕' },
   { id: 3, name: '现代甜宠', slug: 'sweet', icon: '🍬' },
-  { id: 4, name: '玄幻修仙', slug: 'fantasy', icon: '⚔️' },
+  { id: 4, name: '玄幻仙侠', slug: 'fantasy', icon: '⚔️' },
   { id: 5, name: '科幻', slug: 'scifi', icon: '🚀' },
 ]
 const stories = mockStories
