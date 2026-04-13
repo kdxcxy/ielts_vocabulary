@@ -10,3 +10,8 @@ node_modules/
 
 # OS
 .DS_Store
+
+# Local runtime logs
+.next-dev.err.log
+.next-dev.log
+.next-start.log
