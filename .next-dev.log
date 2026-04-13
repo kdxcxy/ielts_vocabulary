@@ -1,0 +1,18 @@
+
+> ielts-vocabulary@0.1.0 dev
+> next dev --port 3000
+
+   ▲ Next.js 15.5.14
+   - Local:        http://localhost:3000
+   - Network:      http://26.26.26.1:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.3s
+ ○ Compiling /stories/[id] ...
+ ✓ Compiled /stories/[id] in 887ms (640 modules)
+ GET /stories/35 200 in 1792ms
+ ○ Compiling /api/stories/[id]/words ...
+ ✓ Compiled /api/stories/[id]/words in 945ms (660 modules)
+ GET /api/auth/profile 200 in 1259ms
+ GET /api/stories/35 200 in 1638ms
+ GET /api/stories/35/words 200 in 1733ms

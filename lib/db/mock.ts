@@ -1,4 +1,5 @@
 import { mockStories } from './mock-stories'
+import { overrideStoryContent } from '../story-content-overrides.js'
 
 type MockUser = {
   id: number
@@ -41,7 +42,10 @@ function createMockDb(): MockDb {
     { id: 4, name: '玄幻仙侠', slug: 'fantasy', icon: '🗡️' },
     { id: 5, name: '科幻', slug: 'scifi', icon: '🚀' },
   ]
-  const stories = mockStories
+  const stories = mockStories.map((story) => ({
+    ...story,
+    content: overrideStoryContent(story),
+  }))
   const bookmarks: any[] = []
 
   return {

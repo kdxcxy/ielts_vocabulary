@@ -4,12 +4,13 @@ import { mockDb } from '@/lib/db/mock'
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getAuthUser(req)
   if (!user || user.role !== 'admin') return err(403, '无权限')
 
-  const codeId = Number(params.id)
+  const { id } = await params
+  const codeId = Number(id)
   if (Number.isNaN(codeId)) return err(400, '参数错误')
 
   const code = mockDb.activationCodes.find((item) => item.id === codeId && !item.is_deleted)

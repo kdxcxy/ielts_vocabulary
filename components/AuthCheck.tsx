@@ -57,15 +57,15 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
       {showInvalidAccountModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-[2rem] bg-white p-8 shadow-2xl">
-            <h3 className="text-lg font-bold text-on-surface">账号提示</h3>
+            <h3 className="text-lg font-bold text-on-surface">{'\u8d26\u53f7\u63d0\u793a'}</h3>
             <p className="mt-3 text-sm leading-7 text-on-surface/70">
-              该账号已失效，请绑定新的激活码
+              {'\u8be5\u8d26\u53f7\u5df2\u5931\u6548\uff0c\u8bf7\u7ed1\u5b9a\u65b0\u7684\u6fc0\u6d3b\u7801'}
             </p>
             <button
               onClick={handleInvalidAccountConfirm}
               className="mt-8 w-full rounded-full bg-gradient-to-r from-primary to-primary-container py-3.5 text-sm font-bold text-white"
             >
-              确定
+              {'\u786e\u5b9a'}
             </button>
           </div>
         </div>
