@@ -126,7 +126,7 @@ export default function HomePage() {
               <item.icon className="mb-3 h-6 w-6 text-primary" strokeWidth={1.5} />
               <p className="mb-1 text-xs text-on-surface/60">{item.label}</p>
               <p className="flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold text-on-surface">{item.value}</span>
+                <span className="text-2xl font-extrabold text-on-surface">{item.value}</span>
                 <span className="text-sm text-on-surface/60">{item.unit}</span>
               </p>
             </div>

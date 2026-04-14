@@ -1,11 +1,11 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import type { UIEvent } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import BookmarkWordModal, { type BookmarkWordDetail } from '@/components/BookmarkWordModal'
-import { BookOpen, Search, Star, Trash2 } from 'lucide-react'
+import { BookOpen, Search, Star, Trash2, Bookmark } from 'lucide-react'
 import { TOKEN_STORAGE_KEY } from '@/lib/constants'
 import { needsDictionaryHydration } from '@/lib/story-word-detail'
 
@@ -113,7 +113,6 @@ export default function BookmarksPage() {
       setSelectedBookmark((current) =>
         current && current.id === bookmark.id ? { ...current, ...parsed } : current
       )
-
       setBookmarks((current) =>
         current.map((item) => (item.id === bookmark.id ? { ...item, ...parsed } : item))
       )
@@ -233,7 +232,7 @@ export default function BookmarksPage() {
             ))
           ) : (
             <div className="py-16 text-center">
-              <span className="mb-4 block text-5xl">📎</span>
+              <Bookmark className="mx-auto mb-4 h-16 w-16 text-primary/30" strokeWidth={1.2} />
               <p className="text-sm text-on-surface/40">还没有收藏的单词</p>
               <Link href="/stories" className="mt-2 inline-block text-sm font-medium text-primary">
                 去学词
