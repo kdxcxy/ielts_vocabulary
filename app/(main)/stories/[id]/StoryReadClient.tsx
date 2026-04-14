@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Bookmark, Brain, Pen, Volume2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, Brain, Mic, Pen, Play, RotateCcw, Square, Star, Volume2 } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import { TOKEN_STORAGE_KEY } from '@/lib/constants'
 import {
@@ -13,6 +13,11 @@ import {
   normalizeWordKey,
 } from '@/lib/story-word-detail'
 import { splitRenderableParagraphs } from '@/lib/story-render'
+import {
+  formatRecordingDuration,
+  getPlaybackCountdownSeconds,
+  getRemainingRecordingSeconds,
+} from '@/lib/story-recorder'
 
 type Mode = 'read' | 'recall' | 'apply'
 type Accent = 'uk' | 'us'
@@ -27,11 +32,14 @@ type WordDetail = {
   word: string
   contextualTranslation: string
   meaningCn: string
+  bookmarkId?: number
   phoneticUs?: string
   phoneticUk?: string
   audioUs?: string
   audioUk?: string
 }
+
+type RecordingState = 'idle' | 'recording' | 'recorded' | 'playing'
 
 function parseDictionaryPhonetics(data: any) {
   return {
@@ -89,8 +97,82 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
   const [loadingStory, setLoadingStory] = useState(true)
   const [storyLoadError, setStoryLoadError] = useState('')
   const [loadingWordDetail, setLoadingWordDetail] = useState(false)
+  const [bookmarkLoading, setBookmarkLoading] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
   const [speakingAccent, setSpeakingAccent] = useState<string | null>(null)
+  const [recordingState, setRecordingState] = useState<RecordingState>('idle')
+  const [recordingDuration, setRecordingDuration] = useState(0)
+  const [recordingError, setRecordingError] = useState('')
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const practiceAudioRef = useRef<HTMLAudioElement | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const mediaStreamRef = useRef<MediaStream | null>(null)
+  const recordingUrlRef = useRef<string | null>(null)
+  const recordedDurationRef = useRef(0)
+  const recordingChunksRef = useRef<Blob[]>([])
+  const recordingTimerRef = useRef<number | null>(null)
+  const playbackTimerRef = useRef<number | null>(null)
+
+  const stopRecordingTimer = () => {
+    if (recordingTimerRef.current !== null) {
+      window.clearInterval(recordingTimerRef.current)
+      recordingTimerRef.current = null
+    }
+  }
+
+  const stopPlaybackTimer = () => {
+    if (playbackTimerRef.current !== null) {
+      window.clearInterval(playbackTimerRef.current)
+      playbackTimerRef.current = null
+    }
+  }
+
+  const stopPracticePlayback = () => {
+    stopPlaybackTimer()
+    if (practiceAudioRef.current) {
+      practiceAudioRef.current.pause()
+      practiceAudioRef.current.currentTime = 0
+      practiceAudioRef.current = null
+    }
+    if (recordedDurationRef.current > 0) {
+      setRecordingDuration(recordedDurationRef.current)
+    }
+  }
+
+  const releaseRecordingStream = () => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop())
+    mediaStreamRef.current = null
+  }
+
+  const revokeRecordingUrl = () => {
+    if (recordingUrlRef.current) {
+      URL.revokeObjectURL(recordingUrlRef.current)
+      recordingUrlRef.current = null
+    }
+  }
+
+  const resetPracticeState = () => {
+    stopRecordingTimer()
+    stopPracticePlayback()
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.ondataavailable = null
+      mediaRecorderRef.current.onstop = null
+      mediaRecorderRef.current.stop()
+    }
+    mediaRecorderRef.current = null
+    releaseRecordingStream()
+    revokeRecordingUrl()
+    recordingChunksRef.current = []
+    recordedDurationRef.current = 0
+    setRecordingDuration(0)
+    setRecordingError('')
+    setRecordingState('idle')
+  }
+
+  const closeWordDetail = () => {
+    resetPracticeState()
+    setSelectedWord(null)
+  }
 
   useEffect(() => {
     if (!storyId) {
@@ -167,9 +249,24 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
   useEffect(() => {
     return () => {
       audioRef.current?.pause()
+      practiceAudioRef.current?.pause()
       window.speechSynthesis?.cancel()
+      stopRecordingTimer()
+      releaseRecordingStream()
+      revokeRecordingUrl()
     }
   }, [])
+
+  useEffect(() => {
+    if (!toastMessage) return
+
+    const timer = window.setTimeout(() => setToastMessage(''), 1800)
+    return () => window.clearTimeout(timer)
+  }, [toastMessage])
+
+  useEffect(() => {
+    resetPracticeState()
+  }, [selectedWord?.word])
 
   const openWordDetail = async (word: string, translation: string) => {
     const key = normalizeWordKey(word)
@@ -178,6 +275,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
       word,
       contextualTranslation: translation,
       meaningCn: existing?.meaningCn || translation,
+      bookmarkId: existing?.bookmarkId,
       phoneticUs: existing?.phoneticUs,
       phoneticUk: existing?.phoneticUk,
       audioUs: existing?.audioUs,
@@ -185,6 +283,36 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
     }
 
     setSelectedWord(nextWordDetail)
+    setBookmarked(Boolean(existing?.bookmarkId))
+
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (token) {
+      try {
+        const bookmarkResponse = await fetch(`/api/bookmarks?word=${encodeURIComponent(word)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        })
+
+        if (bookmarkResponse.ok) {
+          const bookmarkData = await bookmarkResponse.json()
+          const bookmark = bookmarkData.data
+
+          setBookmarked(Boolean(bookmark?.id))
+          setSelectedWord((prev) =>
+            prev && normalizeWordKey(prev.word) === key
+              ? { ...prev, bookmarkId: bookmark?.id }
+              : prev
+          )
+          setWordDetails((current) => ({
+            ...current,
+            [key]: {
+              ...(current[key] || nextWordDetail),
+              bookmarkId: bookmark?.id,
+            },
+          }))
+        }
+      } catch {}
+    }
 
     if (!needsDictionaryHydration(existing)) {
       return
@@ -224,6 +352,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
     const speakingKey = `${detail.word}:${accent}`
 
     audioRef.current?.pause()
+    stopPracticePlayback()
     window.speechSynthesis?.cancel()
 
     const audioUrl =
@@ -263,16 +392,334 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
     window.speechSynthesis.speak(utterance)
   }
 
-  const handleBookmark = () => {
-    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-    if (bookmarked) {
-      fetch('/api/bookmarks', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ wordId: 0, storyId: +storyId }),
-      })
+  const startWordRecording = async () => {
+    if (!selectedWord) return
+
+    if (
+      typeof window === 'undefined' ||
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === 'undefined'
+    ) {
+      setRecordingError('当前设备暂不支持录音')
+      return
     }
-    setBookmarked(!bookmarked)
+
+    try {
+      setRecordingError('')
+      setRecordingDuration(0)
+      revokeRecordingUrl()
+      stopPracticePlayback()
+      audioRef.current?.pause()
+      window.speechSynthesis?.cancel()
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaStreamRef.current = stream
+
+      const recorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = recorder
+      recordingChunksRef.current = []
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordingChunksRef.current.push(event.data)
+        }
+      }
+
+      recorder.onstop = () => {
+        stopRecordingTimer()
+        releaseRecordingStream()
+
+        if (recordingChunksRef.current.length === 0) {
+          setRecordingState('idle')
+          setRecordingError('没有录到声音，请重试')
+          return
+        }
+
+        const audioBlob = new Blob(recordingChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
+        recordingUrlRef.current = URL.createObjectURL(audioBlob)
+        recordedDurationRef.current = recordingDuration
+        setRecordingState('recorded')
+      }
+
+      recorder.start()
+      setRecordingState('recording')
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingDuration((current) => current + 1)
+      }, 1000)
+    } catch {
+      releaseRecordingStream()
+      setRecordingState('idle')
+      setRecordingError('请开启麦克风权限后重试')
+    }
+  }
+
+  const stopWordRecording = () => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop()
+    }
+  }
+
+  const playWordRecording = async () => {
+    if (!recordingUrlRef.current) return
+
+    stopPracticePlayback()
+    audioRef.current?.pause()
+    window.speechSynthesis?.cancel()
+
+    const audio = new Audio(recordingUrlRef.current)
+    practiceAudioRef.current = audio
+    setRecordingDuration(recordedDurationRef.current)
+    const syncPlaybackCountdown = () => {
+      setRecordingDuration(
+        getPlaybackCountdownSeconds(
+          audio.duration,
+          recordedDurationRef.current,
+          audio.currentTime
+        )
+      )
+    }
+
+    audio.onloadedmetadata = syncPlaybackCountdown
+    audio.ontimeupdate = syncPlaybackCountdown
+    audio.onended = () => {
+      stopPlaybackTimer()
+      practiceAudioRef.current = null
+      setRecordingDuration(recordedDurationRef.current)
+      setRecordingState('recorded')
+    }
+    audio.onerror = () => {
+      stopPlaybackTimer()
+      practiceAudioRef.current = null
+      setRecordingDuration(recordedDurationRef.current)
+      setRecordingState('recorded')
+      setRecordingError('录音播放失败，请重新录音')
+    }
+
+    try {
+      setRecordingError('')
+      setRecordingState('playing')
+      playbackTimerRef.current = window.setInterval(syncPlaybackCountdown, 120)
+      await audio.play()
+    } catch {
+      stopPlaybackTimer()
+      practiceAudioRef.current = null
+      setRecordingDuration(recordedDurationRef.current)
+      setRecordingState('recorded')
+      setRecordingError('录音播放失败，请重新录音')
+    }
+  }
+
+  const stopWordRecordingPlayback = () => {
+    stopPracticePlayback()
+    setRecordingState('recorded')
+  }
+
+  const renderRecordingCard = () => {
+    if (!selectedWord) return null
+
+    const primaryButton =
+      recordingState === 'recording'
+        ? {
+            label: '停止录音',
+            icon: Square,
+            onClick: stopWordRecording,
+            className: 'from-[#d6336c] to-[#ff6b9d]',
+          }
+        : recordingState === 'playing'
+          ? {
+              label: '停止播放',
+              icon: Square,
+              onClick: stopWordRecordingPlayback,
+              className: 'from-tertiary to-[#6f63d9]',
+            }
+          : recordingState === 'recorded'
+            ? {
+                label: '播放录音',
+                icon: Play,
+                onClick: playWordRecording,
+                className: 'from-tertiary to-[#6f63d9]',
+              }
+            : {
+                label: '开始录音',
+                icon: Mic,
+                onClick: startWordRecording,
+                className: 'from-primary to-primary-container',
+              }
+
+    const PrimaryIcon = primaryButton.icon
+    const isRecording = recordingState === 'recording'
+    const isPlaying = recordingState === 'playing'
+    const isBusy = isRecording || isPlaying
+
+    return (
+      <div className="mb-4 rounded-[2rem] bg-gradient-to-br from-[#fff4f8] to-[#fff0f6] p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-base font-bold text-on-surface">跟读练习</p>
+            <p className="mt-1 text-sm leading-6 text-on-surface/60">
+              {recordingState === 'recording'
+                ? `请读出：${selectedWord.word}`
+                : recordingState === 'recorded'
+                  ? '已录制完成，可以回放自己的发音'
+                  : recordingState === 'playing'
+                    ? '正在播放你刚才的录音'
+                    : '点按钮读一遍这个单词'}
+            </p>
+          </div>
+          <div className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-primary shadow-sm">
+            {formatRecordingDuration(recordingDuration)}
+          </div>
+        </div>
+
+        <div
+          className={`mt-4 flex items-center gap-2 rounded-2xl bg-white/80 px-4 py-3 transition-all ${
+            isRecording ? 'scale-[1.01] shadow-lg shadow-primary/10' : ''
+          }`}
+        >
+          <span
+            className={`h-3 w-3 rounded-full ${
+              recordingState === 'recording'
+                ? 'recorder-dot-rec bg-[#ff4d6d]'
+                : recordingState === 'playing'
+                  ? 'recorder-dot-play bg-tertiary'
+                  : recordingState === 'recorded'
+                    ? 'bg-green-500 shadow-[0_0_0_4px_rgba(34,197,94,0.18)]'
+                    : 'bg-on-surface/20'
+            }`}
+          />
+          <span className="text-sm font-medium text-on-surface/70">
+            {recordingState === 'recording'
+              ? '录音中...'
+              : recordingState === 'playing'
+                ? '播放中...'
+                : recordingState === 'recorded'
+                  ? '录音已就绪'
+                  : '尚未开始录音'}
+          </span>
+          {isBusy && (
+            <div className="ml-auto flex items-end gap-1">
+              <span
+                className={`recorder-bar h-2 w-1 rounded-full ${
+                  isPlaying ? 'bg-tertiary/70' : 'bg-primary/45'
+                }`}
+              />
+              <span
+                className={`recorder-bar recorder-bar-delay-1 h-3 w-1 rounded-full ${
+                  isPlaying ? 'bg-tertiary/85' : 'bg-primary/60'
+                }`}
+              />
+              <span
+                className={`recorder-bar recorder-bar-delay-2 h-5 w-1 rounded-full ${
+                  isPlaying ? 'bg-tertiary' : 'bg-primary'
+                }`}
+              />
+              <span
+                className={`recorder-bar recorder-bar-delay-3 h-3 w-1 rounded-full ${
+                  isPlaying ? 'bg-tertiary/85' : 'bg-primary/60'
+                }`}
+              />
+            </div>
+          )}
+        </div>
+
+        {recordingError && (
+          <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm leading-6 text-red-500">
+            {recordingError}
+          </p>
+        )}
+
+        <div className="mt-4 flex gap-3">
+          <button
+            type="button"
+            onClick={primaryButton.onClick}
+            className={`flex flex-[1.35] items-center justify-center gap-2 rounded-full bg-gradient-to-r ${primaryButton.className} py-3.5 text-sm font-bold text-white shadow-lg transition-all ${
+              isRecording
+                ? 'recorder-button-rec scale-[1.02] shadow-xl shadow-primary/25'
+                : isPlaying
+                  ? 'recorder-button-play scale-[1.02] shadow-xl shadow-tertiary/25'
+                  : 'hover:shadow-xl'
+            }`}
+          >
+            <PrimaryIcon className="h-4 w-4" />
+            <span>{primaryButton.label}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={resetPracticeState}
+            disabled={recordingState === 'idle' || recordingState === 'recording'}
+            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-surface-container bg-white py-3 text-sm font-medium text-on-surface/70 transition-colors disabled:cursor-not-allowed disabled:text-on-surface/30"
+          >
+            <RotateCcw className="h-4 w-4" />
+            <span>重新录音</span>
+          </button>
+
+          <div className="hidden">
+            {recordingState === 'recorded' || recordingState === 'playing'
+              ? '只保留当前弹框内的本地录音'
+              : '录音不会上传或保存'}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const handleBookmark = () => {
+    if (!selectedWord || bookmarkLoading) return
+
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (!token) return
+
+    const wordKey = normalizeWordKey(selectedWord.word)
+
+    setBookmarkLoading(true)
+
+    const request = bookmarked && selectedWord.bookmarkId
+      ? fetch(`/api/bookmarks/${selectedWord.bookmarkId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      : fetch('/api/bookmarks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            word: selectedWord.word,
+            translation: selectedWord.meaningCn,
+            storyId: +storyId,
+          }),
+        })
+
+    request
+      .then(async (response) => {
+        const data = await response.json()
+        if (!response.ok || data.code !== 200) {
+          throw new Error('收藏操作失败')
+        }
+
+        const nextBookmarkId = bookmarked ? undefined : data.data?.bookmark?.id
+
+        setBookmarked(!bookmarked)
+        setToastMessage(bookmarked ? '已取消收藏' : '收藏成功')
+        setSelectedWord((prev) =>
+          prev ? { ...prev, bookmarkId: nextBookmarkId } : prev
+        )
+        setWordDetails((current) => ({
+          ...current,
+          [wordKey]: {
+            ...(current[wordKey] || selectedWord),
+            bookmarkId: nextBookmarkId,
+          },
+        }))
+      })
+      .catch(() => {
+        setToastMessage('收藏操作失败')
+      })
+      .finally(() => {
+        setBookmarkLoading(false)
+      })
   }
 
   const renderAccentRow = (
@@ -459,7 +906,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
       {selectedWord && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-          onClick={() => setSelectedWord(null)}
+          onClick={closeWordDetail}
         >
           <div
             className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl"
@@ -472,9 +919,12 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
               <button
                 onClick={handleBookmark}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container"
+                disabled={bookmarkLoading}
               >
-                <Bookmark
-                  className={`h-5 w-5 ${bookmarked ? 'fill-primary text-primary' : 'text-primary'}`}
+                <Star
+                  className={`h-5 w-5 ${
+                    bookmarked ? 'fill-primary text-primary' : 'text-primary'
+                  } ${bookmarkLoading ? 'opacity-50' : ''}`}
                 />
               </button>
             </div>
@@ -483,6 +933,8 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
               {renderAccentRow(selectedWord, 'uk', '\u82f1', selectedWord.phoneticUk)}
               {renderAccentRow(selectedWord, 'us', '\u7f8e', selectedWord.phoneticUs)}
             </div>
+
+            {renderRecordingCard()}
 
             <div className="mb-6 rounded-xl bg-surface-container p-4">
               <p className="whitespace-pre-line text-base text-on-surface">
@@ -493,12 +945,18 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
             </div>
 
             <button
-              onClick={() => setSelectedWord(null)}
+              onClick={closeWordDetail}
               className="w-full rounded-full bg-gradient-to-r from-primary to-primary-container py-3.5 text-base font-bold text-white"
             >
               {'\u6211\u8bb0\u4f4f\u4e86'}
             </button>
           </div>
+        </div>
+      )}
+
+      {toastMessage && (
+        <div className="fixed top-20 left-1/2 z-[130] -translate-x-1/2 rounded-full bg-on-surface/80 px-4 py-2 text-sm font-medium text-white shadow-lg backdrop-blur-sm">
+          {toastMessage}
         </div>
       )}
 

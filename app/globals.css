@@ -31,3 +31,95 @@ input:focus {
 [aria-label="Open Next.js Dev Tools"] {
   display: none !important;
 }
+
+@keyframes recorder-bar-bounce {
+  0%, 100% {
+    transform: scaleY(0.55);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleY(1.25);
+    opacity: 1;
+  }
+}
+
+@keyframes recorder-dot-rec {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.32);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 77, 109, 0);
+    transform: scale(1.08);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 109, 0);
+    transform: scale(1);
+  }
+}
+
+@keyframes recorder-dot-play {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(85, 77, 181, 0.24);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(85, 77, 181, 0);
+    transform: scale(1.06);
+  }
+}
+
+@keyframes recorder-button-rec {
+  0%, 100% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+  50% {
+    transform: scale(1.035);
+    filter: saturate(1.08);
+  }
+}
+
+@keyframes recorder-button-play {
+  0%, 100% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+  50% {
+    transform: scale(1.025);
+    filter: saturate(1.06);
+  }
+}
+
+.recorder-bar {
+  transform-origin: bottom;
+  animation: recorder-bar-bounce 0.9s ease-in-out infinite;
+}
+
+.recorder-bar-delay-1 {
+  animation-delay: 0.12s;
+}
+
+.recorder-bar-delay-2 {
+  animation-delay: 0.24s;
+}
+
+.recorder-bar-delay-3 {
+  animation-delay: 0.36s;
+}
+
+.recorder-dot-rec {
+  animation: recorder-dot-rec 1.2s ease-out infinite;
+}
+
+.recorder-dot-play {
+  animation: recorder-dot-play 1s ease-in-out infinite;
+}
+
+.recorder-button-rec {
+  animation: recorder-button-rec 1s ease-in-out infinite;
+}
+
+.recorder-button-play {
+  animation: recorder-button-play 0.9s ease-in-out infinite;
+}
