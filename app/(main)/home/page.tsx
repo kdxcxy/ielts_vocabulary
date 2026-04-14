@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -122,16 +122,12 @@ export default function HomePage() {
       <div className="-mt-6 mb-6 px-6">
         <div className="grid grid-cols-3 gap-3">
           {statCards.map((item) => (
-            <div key={item.label} className="rounded-xl bg-surface-container-lowest p-4 shadow-sm">
-              <div
-                className={`mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br ${item.gradient}`}
-              >
-                <item.icon className="h-5 w-5 text-white" strokeWidth={2.5} />
-              </div>
+            <div key={item.label} className="rounded-xl bg-white/60 p-4 shadow-md shadow-black/5 backdrop-blur-lg border border-white/40">
+              <item.icon className="mb-3 h-6 w-6 text-primary" strokeWidth={1.5} />
               <p className="mb-1 text-xs text-on-surface/60">{item.label}</p>
-              <p className="text-base font-bold text-on-surface">
-                {item.value}
-                <span className="ml-1 text-sm font-normal text-on-surface/60">{item.unit}</span>
+              <p className="flex items-baseline gap-1">
+                <span className="text-3xl font-extrabold text-on-surface">{item.value}</span>
+                <span className="text-sm text-on-surface/60">{item.unit}</span>
               </p>
             </div>
           ))}
