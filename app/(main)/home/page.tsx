@@ -1,66 +1,161 @@
 'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
-import { TrendingUp, Clock, BookOpen } from 'lucide-react'
+import { BookOpen, RotateCcw, TrendingUp } from 'lucide-react'
+import { TOKEN_STORAGE_KEY } from '@/lib/constants'
+
+type HomeStats = {
+  learnedWords: number
+  totalVocabulary: number
+  progressPercent: number
+  streakDays: number
+  completedStories: number
+  reviewCount: number
+}
+
+const DEFAULT_STATS: HomeStats = {
+  learnedWords: 0,
+  totalVocabulary: 0,
+  progressPercent: 0,
+  streakDays: 0,
+  completedStories: 0,
+  reviewCount: 0,
+}
 
 export default function HomePage() {
+  const [username, setUsername] = useState('学习者')
+  const [stats, setStats] = useState<HomeStats>(DEFAULT_STATS)
+
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (!token) return
+
+    Promise.all([
+      fetch('/api/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      }),
+      fetch('/api/home-stats', {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      }),
+    ])
+      .then(async ([profileRes, statsRes]) => {
+        const profileData = profileRes.ok ? await profileRes.json() : null
+        const statsData = statsRes.ok ? await statsRes.json() : null
+
+        if (profileData?.data?.username) {
+          setUsername(profileData.data.username)
+        }
+
+        if (statsData?.data) {
+          setStats({
+            learnedWords: Number(statsData.data.learnedWords || 0),
+            totalVocabulary: Number(statsData.data.totalVocabulary || 0),
+            progressPercent: Number(statsData.data.progressPercent || 0),
+            streakDays: Number(statsData.data.streakDays || 0),
+            completedStories: Number(statsData.data.completedStories || 0),
+            reviewCount: Number(statsData.data.reviewCount || 0),
+          })
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const statCards = [
+    {
+      icon: TrendingUp,
+      label: '连续学习',
+      value: stats.streakDays,
+      unit: '天',
+      gradient: 'from-[#ff6b9d] to-[#c239b3]',
+    },
+    {
+      icon: BookOpen,
+      label: '完成故事',
+      value: stats.completedStories,
+      unit: '篇',
+      gradient: 'from-tertiary to-[#764ba2]',
+    },
+    {
+      icon: RotateCcw,
+      label: '待复习',
+      value: stats.reviewCount,
+      unit: '词',
+      gradient: 'from-[#f093fb] to-[#f5576c]',
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-surface pb-20">
-      <div className="bg-gradient-to-br from-primary to-primary-container px-6 pt-14 pb-12 rounded-b-[2rem]">
-        <div className="flex items-center justify-between mb-6">
+      <div className="rounded-b-[2rem] bg-gradient-to-br from-primary to-primary-container px-6 pt-14 pb-12">
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-1">Hi, 学习者</h1>
-            <p className="text-sm text-white/80">今天也要加油哦 💪</p>
+            <h1 className="mb-1 text-3xl font-bold text-white">Hi, {username}</h1>
+            <p className="text-sm text-white/80">今天也要加油哦</p>
           </div>
-          <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
             <span className="text-2xl">🌸</span>
           </div>
         </div>
-        
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
+
+        <div className="rounded-3xl bg-white/95 p-6 shadow-lg backdrop-blur-xl">
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-on-surface">学习进度</h2>
-            <span className="text-sm text-on-surface/60">本周</span>
+            <span className="text-sm text-on-surface/60">累计</span>
           </div>
-          <div className="flex items-end gap-2 mb-3">
-            <span className="text-5xl font-bold text-primary">0</span>
-            <span className="text-lg text-on-surface/60 mb-2">/ 9400 词</span>
+          <div className="mb-3 flex items-end gap-2">
+            <span className="text-5xl font-bold text-primary">{stats.learnedWords}</span>
+            <span className="mb-2 text-lg text-on-surface/60">/ {stats.totalVocabulary} 词</span>
           </div>
-          <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style={{width: '0%'}}></div>
+          <div className="h-3 w-full overflow-hidden rounded-full bg-surface-container-high">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-primary-container"
+              style={{ width: `${stats.progressPercent}%` }}
+            />
           </div>
         </div>
       </div>
 
-      <div className="px-6 -mt-6 mb-6">
+      <div className="-mt-6 mb-6 px-6">
         <div className="grid grid-cols-3 gap-3">
-          {[
-            { icon: TrendingUp, label: '连续学习', value: '0', unit: '天', gradient: 'from-[#ff6b9d] to-[#c239b3]' },
-            { icon: Clock, label: '学习时长', value: '0', unit: '分钟', gradient: 'from-tertiary to-[#764ba2]' },
-            { icon: BookOpen, label: '完成故事', value: '0', unit: '篇', gradient: 'from-[#f093fb] to-[#f5576c]' },
-          ].map((item, i) => (
-            <div key={i} className="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
-              <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-3`}>
-                <item.icon className="w-5 h-5 text-white" strokeWidth={2.5} />
+          {statCards.map((item) => (
+            <div key={item.label} className="rounded-xl bg-surface-container-lowest p-4 shadow-sm">
+              <div
+                className={`mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br ${item.gradient}`}
+              >
+                <item.icon className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
-              <p className="text-xs text-on-surface/60 mb-1">{item.label}</p>
-              <p className="text-base font-bold text-on-surface">{item.value}<span className="text-sm font-normal text-on-surface/60 ml-1">{item.unit}</span></p>
+              <p className="mb-1 text-xs text-on-surface/60">{item.label}</p>
+              <p className="text-base font-bold text-on-surface">
+                {item.value}
+                <span className="ml-1 text-sm font-normal text-on-surface/60">{item.unit}</span>
+              </p>
             </div>
           ))}
         </div>
       </div>
 
       <div className="px-6">
-        <h3 className="text-lg font-bold text-on-surface mb-4">快速开始</h3>
+        <h3 className="mb-4 text-lg font-bold text-on-surface">快速开始</h3>
         <div className="space-y-3">
-          <a href="/stories" className="block bg-gradient-to-r from-primary to-primary-container text-white py-4 rounded-full text-center font-bold text-base shadow-lg">
+          <Link
+            href="/stories"
+            className="block rounded-full bg-gradient-to-r from-primary to-primary-container py-4 text-center text-base font-bold text-white shadow-lg"
+          >
             开始学习
-          </a>
-          <a href="/bookmarks" className="block bg-surface-container-highest text-on-surface py-4 rounded-full text-center font-medium text-base">
+          </Link>
+          <Link
+            href="/bookmarks"
+            className="block rounded-full bg-surface-container-highest py-4 text-center text-base font-medium text-on-surface"
+          >
             复习收藏
-          </a>
+          </Link>
         </div>
       </div>
-      
+
       <BottomNav />
     </div>
   )

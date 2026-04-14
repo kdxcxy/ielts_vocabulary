@@ -88,6 +88,28 @@ function pickFemaleVoice(voices: SpeechSynthesisVoice[], accent: Accent) {
   return voices.find((voice) => voice.lang.startsWith('en')) || null
 }
 
+async function postLearningEvent(payload: {
+  storyId: number
+  viewedWord?: string
+  markStoryCompleted?: boolean
+}) {
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem(TOKEN_STORAGE_KEY) : null
+
+  if (!token) return
+
+  try {
+    await fetch('/api/learning-events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    })
+  } catch {}
+}
+
 export default function StoryReadClient({ storyId }: { storyId: string }) {
   const [story, setStory] = useState<Story | null>(null)
   const [mode, setMode] = useState<Mode>('read')
@@ -226,6 +248,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
 
         setStory(storyData.data)
         setWordDetails(nextDetails)
+        void postLearningEvent({ storyId: Number(storyId) })
       } catch (error) {
         if (cancelled) return
         setStory(null)
@@ -284,6 +307,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
 
     setSelectedWord(nextWordDetail)
     setBookmarked(Boolean(existing?.bookmarkId))
+    void postLearningEvent({ storyId: Number(storyId), viewedWord: word })
 
     const token = localStorage.getItem(TOKEN_STORAGE_KEY)
     if (token) {

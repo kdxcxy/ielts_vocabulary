@@ -16,6 +16,8 @@ type MockDb = {
   categories: Array<{ id: number; name: string; slug: string; icon: string }>
   stories: typeof mockStories
   bookmarks: any[]
+  learningProgress: any[]
+  activityLog: Array<{ userId: number; date: string }>
 }
 
 declare global {
@@ -47,6 +49,8 @@ function createMockDb(): MockDb {
     content: overrideStoryContent(story),
   }))
   const bookmarks: any[] = []
+  const learningProgress: any[] = []
+  const activityLog: Array<{ userId: number; date: string }> = []
 
   return {
     users,
@@ -54,6 +58,8 @@ function createMockDb(): MockDb {
     categories,
     stories,
     bookmarks,
+    learningProgress,
+    activityLog,
   }
 }
 

@@ -1,45 +1,35 @@
-'use client'
-
+﻿'use client'
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
 import {
-  BookOpen,
   ChevronRight,
-  Clock,
   HelpCircle,
   LogOut,
   Settings,
   Star,
   Ticket,
-  TrendingUp,
 } from 'lucide-react'
 import { TOKEN_STORAGE_KEY } from '@/lib/constants'
-
 export default function ProfilePage() {
   const [user, setUser] = useState<{ username: string; role: string } | null>(null)
-
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_STORAGE_KEY)
     if (!token) return
-
     fetch('/api/auth/profile', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => setUser(data.data))
   }, [])
-
   const handleLogout = () => {
     localStorage.removeItem(TOKEN_STORAGE_KEY)
     window.location.href = '/login'
   }
-
   return (
     <div className="min-h-screen bg-surface pb-20">
       <div className="bg-gradient-to-br from-primary to-primary-container px-6 pt-14 pb-20">
         <h1 className="mb-6 text-2xl font-bold text-white">我的</h1>
       </div>
-
       <div className="-mt-14 mb-5 px-6">
         <div className="flex items-center rounded-2xl bg-white p-5 shadow-lg">
           <div className="mr-4 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-container">
@@ -52,26 +42,6 @@ export default function ProfilePage() {
           <ChevronRight className="h-5 w-5 text-on-surface/30" />
         </div>
       </div>
-
-      <div className="mb-5 px-6">
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-sm font-bold text-on-surface">学习数据</h3>
-          <div className="flex justify-around">
-            {[
-              { icon: BookOpen, label: '已学词汇', value: '0', color: 'text-primary' },
-              { icon: TrendingUp, label: '完成故事', value: '0', color: 'text-tertiary' },
-              { icon: Clock, label: '学习时长', value: '0h', color: 'text-[#f5576c]' },
-            ].map((item) => (
-              <div key={item.label} className="text-center">
-                <item.icon className={`mx-auto mb-1.5 h-6 w-6 ${item.color}`} />
-                <p className="text-xl font-bold text-on-surface">{item.value}</p>
-                <p className="mt-0.5 text-[11px] text-on-surface/50">{item.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-2.5 px-6">
         {[
           { icon: Ticket, label: '激活码管理', href: '/activation-codes', gradient: 'from-[#ff6b9d] to-[#c239b3]' },
@@ -91,7 +61,6 @@ export default function ProfilePage() {
             </div>
           </a>
         ))}
-
         <button onClick={handleLogout} className="w-full rounded-2xl bg-white p-4 shadow-sm">
           <div className="flex items-center">
             <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-surface-container-high">
@@ -101,7 +70,6 @@ export default function ProfilePage() {
           </div>
         </button>
       </div>
-
       <BottomNav />
     </div>
   )
