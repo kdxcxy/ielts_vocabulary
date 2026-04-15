@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+﻿import { NextRequest } from 'next/server'
 import { err, getAuthUser, ok } from '@/lib/api'
 import { mockDb } from '@/lib/db/mock'
 
@@ -7,7 +7,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getAuthUser(req)
-  if (!user || user.role !== 'admin') return err(403, '无权限')
+  if (!user || user.username !== 'kongdx') return err(403, '无权限')
 
   const { id } = await params
   const codeId = Number(id)
@@ -19,7 +19,7 @@ export async function DELETE(
   let invalidatedUser: { id: number; username: string } | null = null
   if (code.user_id) {
     const linkedUser = mockDb.users.find((item) => item.id === code.user_id)
-    if (linkedUser && linkedUser.role !== 'admin') {
+    if (linkedUser && linkedUser.username !== 'kongdx') {
       linkedUser.status = 0
       invalidatedUser = { id: linkedUser.id, username: linkedUser.username }
     }
@@ -39,3 +39,4 @@ export async function DELETE(
     invalidatedUser,
   })
 }
+

@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+﻿import { NextRequest } from 'next/server'
 import { err, getAuthUser, ok } from '@/lib/api'
 import { mockDb } from '@/lib/db/mock'
 
@@ -16,7 +16,7 @@ function formatTime(iso: string | null): string | null {
 
 export async function GET(req: NextRequest) {
   const user = await getAuthUser(req)
-  if (!user || user.role !== 'admin') return err(403, '无权限')
+  if (!user || user.username !== 'kongdx') return err(403, '无权限')
 
   const result = mockDb.activationCodes
     .filter((code) => !code.is_deleted)
@@ -32,9 +32,10 @@ export async function GET(req: NextRequest) {
           ? '永久有效'
           : formatTime(code.activated_expires_at)
         : '-',
-      status: code.is_used ? 'used' : 'unused',
+      status: code.is_used ? (code.activated_expires_at && new Date(code.activated_expires_at) < new Date() ? 'expired' : 'active') : 'unused',
       createdAt: formatTime(code.created_at),
     }))
 
   return ok(result)
 }
+

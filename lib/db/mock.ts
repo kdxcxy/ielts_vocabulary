@@ -1,4 +1,4 @@
-import { mockStories } from './mock-stories'
+﻿import { mockStories } from './mock-stories'
 import { overrideStoryContent } from '../story-content-overrides.js'
 
 type MockUser = {
@@ -28,8 +28,8 @@ function createMockDb(): MockDb {
   const users: MockUser[] = [
     {
       id: 1,
-      username: 'admin',
-      password_hash: 'ddfa6616b186bd99b0d72bceb2c2630cebfb9f7a20d7ceecc52c6a656bc9fe5e',
+      username: 'kongdx',
+      password_hash: 'ff4596a662ca50e14981830df8f1a89b5eb8f5d8ea03fe1895cb2b699b5b1d7a',
       role: 'admin',
       status: 1,
       expires_at: null,

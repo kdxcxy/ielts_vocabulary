@@ -131,6 +131,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const recordingUrlRef = useRef<string | null>(null)
   const recordedDurationRef = useRef(0)
+  const recordingElapsedRef = useRef(0)
   const recordingChunksRef = useRef<Blob[]>([])
   const recordingTimerRef = useRef<number | null>(null)
   const playbackTimerRef = useRef<number | null>(null)
@@ -185,6 +186,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
     releaseRecordingStream()
     revokeRecordingUrl()
     recordingChunksRef.current = []
+    recordingElapsedRef.current = 0
     recordedDurationRef.current = 0
     setRecordingDuration(0)
     setRecordingError('')
@@ -431,6 +433,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
     try {
       setRecordingError('')
       setRecordingDuration(0)
+      recordingElapsedRef.current = 0
       revokeRecordingUrl()
       stopPracticePlayback()
       audioRef.current?.pause()
@@ -461,14 +464,16 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
 
         const audioBlob = new Blob(recordingChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
         recordingUrlRef.current = URL.createObjectURL(audioBlob)
-        recordedDurationRef.current = recordingDuration
+        recordedDurationRef.current = recordingElapsedRef.current
+        setRecordingDuration(recordingElapsedRef.current)
         setRecordingState('recorded')
       }
 
       recorder.start()
       setRecordingState('recording')
       recordingTimerRef.current = window.setInterval(() => {
-        setRecordingDuration((current) => current + 1)
+        recordingElapsedRef.current += 1
+        setRecordingDuration(recordingElapsedRef.current)
       }, 1000)
     } catch {
       releaseRecordingStream()
@@ -490,31 +495,33 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
     audioRef.current?.pause()
     window.speechSynthesis?.cancel()
 
+    const fallbackDuration = Math.max(recordedDurationRef.current, 0)
     const audio = new Audio(recordingUrlRef.current)
     practiceAudioRef.current = audio
-    setRecordingDuration(recordedDurationRef.current)
+    setRecordingDuration(fallbackDuration)
     const syncPlaybackCountdown = () => {
       setRecordingDuration(
         getPlaybackCountdownSeconds(
           audio.duration,
-          recordedDurationRef.current,
+          fallbackDuration,
           audio.currentTime
         )
       )
     }
 
     audio.onloadedmetadata = syncPlaybackCountdown
+    audio.oncanplay = syncPlaybackCountdown
     audio.ontimeupdate = syncPlaybackCountdown
     audio.onended = () => {
       stopPlaybackTimer()
       practiceAudioRef.current = null
-      setRecordingDuration(recordedDurationRef.current)
+      setRecordingDuration(fallbackDuration)
       setRecordingState('recorded')
     }
     audio.onerror = () => {
       stopPlaybackTimer()
       practiceAudioRef.current = null
-      setRecordingDuration(recordedDurationRef.current)
+      setRecordingDuration(fallbackDuration)
       setRecordingState('recorded')
       setRecordingError('录音播放失败，请重新录音')
     }
@@ -522,12 +529,14 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
     try {
       setRecordingError('')
       setRecordingState('playing')
+      audio.load()
+      syncPlaybackCountdown()
       playbackTimerRef.current = window.setInterval(syncPlaybackCountdown, 120)
       await audio.play()
     } catch {
       stopPlaybackTimer()
       practiceAudioRef.current = null
-      setRecordingDuration(recordedDurationRef.current)
+      setRecordingDuration(fallbackDuration)
       setRecordingState('recorded')
       setRecordingError('录音播放失败，请重新录音')
     }

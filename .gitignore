@@ -15,3 +15,4 @@ node_modules/
 .next-dev.err.log
 .next-dev.log
 .next-start.log
+dev.log

@@ -44,10 +44,10 @@ export default function ProfilePage() {
       </div>
       <div className="space-y-2.5 px-6">
         {[
-          { icon: Ticket, label: '激活码管理', href: '/activation-codes', gradient: 'from-[#ff6b9d] to-[#c239b3]' },
+          user?.username === 'kongdx' && { icon: Ticket, label: '激活码管理', href: '/activation-codes', gradient: 'from-[#ff6b9d] to-[#c239b3]' },
           { icon: Star, label: '我的收藏', href: '/bookmarks', gradient: 'from-[#f093fb] to-[#f5576c]' },
           { icon: HelpCircle, label: '帮助与反馈', href: '#', gradient: 'from-[#4facfe] to-[#00f2fe]' },
-        ].map((item) => (
+        ].filter(Boolean).map((item) => (
           <a key={item.label} href={item.href} className="block rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex items-center">
               <div

@@ -1,0 +1,194 @@
+
+> ielts-vocabulary@0.1.0 dev D:\myProject\ielts_vocabulary
+> next dev
+
+   ▲ Next.js 15.5.14
+   - Local:        http://localhost:3000
+   - Network:      http://26.26.26.1:3000
+
+ ✓ Starting...
+ ✓ Ready in 3.7s
+ ○ Compiling / ...
+ ✓ Compiled / in 1060ms (542 modules)
+ GET / 307 in 1403ms
+ ✓ Compiled /login in 193ms (549 modules)
+ GET /login 200 in 348ms
+ ○ Compiling /activation-codes ...
+ ✓ Compiled /activation-codes in 1230ms (659 modules)
+ GET /activation-codes 200 in 1494ms
+ ✓ Compiled /api/auth/profile in 423ms (671 modules)
+ GET /api/auth/profile 200 in 648ms
+ GET /api/admin/activation-codes/list 200 in 653ms
+ GET /activation-codes 200 in 182ms
+ GET /api/admin/activation-codes/list 200 in 20ms
+ GET /api/auth/profile 200 in 27ms
+ GET /activation-codes 200 in 56ms
+ GET /api/admin/activation-codes/list 200 in 18ms
+ GET /api/auth/profile 200 in 24ms
+ ✓ Compiled /profile in 287ms (686 modules)
+ GET /profile 200 in 387ms
+ GET /api/auth/profile 200 in 73ms
+ GET /api/auth/profile 200 in 12ms
+ GET /api/auth/profile 200 in 14ms
+ GET /activation-codes 200 in 146ms
+ GET /api/admin/activation-codes/list 200 in 50ms
+ GET /api/auth/profile 200 in 57ms
+ ✓ Compiled in 1826ms (671 modules)
+ GET /activation-codes 200 in 300ms
+ ✓ Compiled /api/auth/profile in 429ms (683 modules)
+ GET /api/auth/profile 200 in 335ms
+ GET /activation-codes 200 in 224ms
+ ✓ Compiled /api/admin/activation-codes/list in 109ms (412 modules)
+ GET /api/admin/activation-codes/list 200 in 230ms
+ GET /activation-codes 200 in 181ms
+ GET /api/auth/profile 200 in 43ms
+ GET /api/auth/profile 200 in 55ms
+ GET /api/admin/activation-codes/list 200 in 14ms
+ GET /activation-codes 200 in 44ms
+ GET /api/auth/profile 200 in 27ms
+ GET /api/auth/profile 200 in 49ms
+ GET /api/admin/activation-codes/list 200 in 15ms
+ GET /activation-codes 200 in 44ms
+ GET /api/auth/profile 401 in 76ms
+ GET /api/auth/profile 401 in 85ms
+ ○ Compiling /home ...
+ ✓ Compiled /home in 509ms (684 modules)
+ GET /home 200 in 609ms
+ GET /api/auth/profile 401 in 88ms
+ ○ Compiling /api/home-stats ...
+ ✓ Compiled /api/home-stats in 653ms (692 modules)
+ GET /api/auth/profile 401 in 736ms
+ GET /api/home-stats 401 in 776ms
+ GET /api/home-stats 401 in 777ms
+ ✓ Compiled /login in 210ms (433 modules)
+ GET /login 200 in 292ms
+ GET /login 200 in 26ms
+ ✓ Compiled /api/admin/activation-codes/generate in 252ms (700 modules)
+ POST /api/admin/activation-codes/generate 200 in 361ms
+ GET /api/admin/activation-codes/list 200 in 49ms
+ ✓ Compiled /register in 312ms (707 modules)
+ GET /register 200 in 495ms
+ ✓ Compiled /api/auth/register in 303ms (709 modules)
+ POST /api/auth/register 200 in 409ms
+ GET /home 200 in 165ms
+ GET /api/auth/profile 200 in 148ms
+ GET /api/auth/profile 200 in 149ms
+ GET /api/home-stats 200 in 169ms
+ GET /profile 200 in 31ms
+ GET /api/auth/profile 200 in 12ms
+ GET /api/auth/profile 200 in 16ms
+ GET /api/auth/profile 200 in 14ms
+ ✓ Compiled in 546ms (723 modules)
+ ✓ Compiled in 0ms (443 modules)
+ ✓ Compiled in 1ms (443 modules)
+ ✓ Compiled in 0ms (443 modules)
+ GET /api/admin/activation-codes/list 200 in 720ms
+ GET /profile 200 in 796ms
+ GET /activation-codes 200 in 797ms
+ ○ Compiling /_error ...
+ GET /profile 500 in 4604ms
+ GET /activation-codes 500 in 4605ms
+ GET /profile 500 in 109ms
+ GET /activation-codes 500 in 119ms
+ GET /profile 500 in 53ms
+ GET /activation-codes 500 in 58ms
+ GET /profile 500 in 26ms
+ GET /activation-codes 500 in 32ms
+ ✓ Compiled /_error in 268ms (432 modules)
+ GET /activation-codes 500 in 34ms
+ GET /profile 500 in 44ms
+ GET /activation-codes 500 in 20ms
+ ✓ Compiled in 894ms (1042 modules)
+ GET /activation-codes 200 in 281ms
+ GET /activation-codes 200 in 284ms
+ GET /activation-codes 200 in 146ms
+ GET /activation-codes 200 in 147ms
+ ✓ Compiled /api/auth/profile in 232ms (622 modules)
+ GET /api/auth/profile 200 in 455ms
+ GET /api/auth/profile 200 in 453ms
+ GET /api/auth/profile 200 in 450ms
+ GET /api/auth/profile 200 in 460ms
+ GET /home 200 in 78ms
+ ✓ Compiled /api/home-stats in 361ms (624 modules)
+ ✓ Compiled in 0ms (632 modules)
+ ✓ Compiled in 1ms (632 modules)
+ ✓ Compiled in 0ms (632 modules)
+ GET /api/auth/profile 200 in 1052ms
+ GET /api/auth/profile 200 in 1055ms
+ GET /api/admin/activation-codes/list 200 in 1200ms
+ GET /api/auth/profile 200 in 1058ms
+ GET /api/home-stats 200 in 1420ms
+ GET /api/home-stats 200 in 1431ms
+ GET /home 200 in 1140ms
+ GET /activation-codes 200 in 1142ms
+ GET /activation-codes 200 in 139ms
+ GET /api/auth/profile 200 in 40ms
+ GET /api/auth/profile 200 in 50ms
+ GET /api/admin/activation-codes/list 200 in 35ms
+ GET /activation-codes 200 in 44ms
+ GET /api/auth/profile 200 in 42ms
+ GET /api/auth/profile 200 in 49ms
+ GET /home 200 in 41ms
+ GET /api/auth/profile 200 in 16ms
+ GET /api/auth/profile 200 in 37ms
+ GET /api/auth/profile 200 in 39ms
+ GET /api/home-stats 200 in 77ms
+ GET /api/home-stats 200 in 93ms
+ GET /profile 200 in 31ms
+ GET /api/auth/profile 200 in 16ms
+ GET /api/auth/profile 200 in 15ms
+ GET /api/auth/profile 200 in 32ms
+ GET /profile 200 in 54ms
+ GET /api/auth/profile 200 in 35ms
+ GET /api/auth/profile 200 in 34ms
+ GET /activation-codes 200 in 46ms
+ GET /api/auth/profile 200 in 19ms
+ GET /api/auth/profile 200 in 22ms
+ GET /api/admin/activation-codes/list 200 in 18ms
+ ○ Compiling /bookmarks ...
+ ✓ Compiled /bookmarks in 1038ms (1055 modules)
+ GET /bookmarks 200 in 1364ms
+ ○ Compiling /api/auth/profile ...
+ ✓ Compiled /api/auth/profile in 701ms (1074 modules)
+ GET /api/auth/profile 200 in 919ms
+ GET /api/bookmarks 200 in 943ms
+ ✓ Compiled /stories in 335ms (1083 modules)
+ GET /stories 200 in 435ms
+ ✓ Compiled /api/stories in 462ms (1085 modules)
+ GET /api/stories 200 in 571ms
+ GET /api/auth/profile 200 in 594ms
+ GET /api/stories 200 in 14ms
+ ✓ Compiled /stories/[id] in 477ms (1101 modules)
+ GET /stories/1 200 in 1260ms
+ ○ Compiling /api/stories/[id]/words ...
+ ✓ Compiled /api/stories/[id]/words in 783ms (1105 modules)
+ GET /api/auth/profile 200 in 872ms
+ GET /api/stories/1 200 in 1519ms
+ GET /api/stories/1/words 200 in 1621ms
+ ✓ Compiled /api/learning-events in 333ms (1108 modules)
+ POST /api/learning-events 200 in 419ms
+ POST /api/learning-events 200 in 14ms
+ GET /api/bookmarks?word=roundabout 200 in 57ms
+ POST /api/bookmarks 200 in 13ms
+ GET /stories 200 in 54ms
+ GET /api/stories 200 in 44ms
+ GET /api/auth/profile 200 in 74ms
+ GET /api/stories 200 in 44ms
+ GET /stories/2 200 in 157ms
+ GET /api/stories/2 200 in 119ms
+ GET /api/auth/profile 200 in 216ms
+ GET /api/stories/2/words 200 in 242ms
+ POST /api/learning-events 200 in 16ms
+ POST /api/learning-events 200 in 15ms
+ GET /api/bookmarks?word=gloomy 200 in 44ms
+ ✓ Compiled /api/stories/[id]/words in 618ms (1074 modules)
+ ✓ Compiled in 0ms (638 modules)
+ GET /api/stories/1 200 in 753ms
+ GET /api/stories/2 200 in 754ms
+ GET /api/stories/2/words 200 in 983ms
+ GET /api/stories/1/words 200 in 994ms
+ GET /stories/1 200 in 787ms
+ GET /stories/2 200 in 789ms
+ ✓ Compiled /api/learning-events in 192ms (642 modules)
+ POST /api/learning-events 200 in 322ms
+ POST /api/learning-events 200 in 327ms

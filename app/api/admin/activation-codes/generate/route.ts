@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+﻿import { NextRequest } from 'next/server'
 import { ok, err, getAuthUser } from '@/lib/api'
 import { generateActivationCode } from '@/lib/codeGenerator'
 import { mockDb } from '@/lib/db/mock'
@@ -35,7 +35,7 @@ function formatExpiresAt(expiresAt: string | null): string {
 
 export async function POST(req: NextRequest) {
   const user = await getAuthUser(req)
-  if (!user || user.role !== 'admin') return err(403, '无权限')
+  if (!user || user.username !== 'kongdx') return err(403, '无权限')
 
   const { count, durationType } = await req.json()
   if (!count || !durationType) return err(400, '参数错误')
@@ -63,3 +63,4 @@ export async function POST(req: NextRequest) {
     expiresAt: formatExpiresAt(expiresAt)
   })
 }
+

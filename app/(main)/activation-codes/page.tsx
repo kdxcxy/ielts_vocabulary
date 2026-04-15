@@ -1,6 +1,7 @@
-'use client'
+﻿﻿'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
 import { ArrowLeft, Check, ChevronRight, Copy, Plus, Search, Trash2 } from 'lucide-react'
 import { TOKEN_STORAGE_KEY } from '@/lib/constants'
@@ -18,7 +19,7 @@ interface ActivationCode {
 }
 
 type DurationFilter = 'all' | '1min' | '24h' | '1year' | 'forever'
-type StatusFilter = 'all' | 'used' | 'unused'
+type StatusFilter = 'all' | 'active' | 'expired' | 'unused'
 type ActivatedTimeFilter = 'all' | 'today' | '7days' | '30days' | 'notActivated'
 type DateFieldType = 'start' | 'end'
 
@@ -32,7 +33,8 @@ const durationLabels: Record<string, string> = {
 
 const statusLabels: Record<string, string> = {
   all: '全部',
-  used: '已使用',
+  active: '使用中',
+  expired: '已失效',
   unused: '未使用',
 }
 
@@ -90,7 +92,9 @@ function matchActivatedTimeFilter(code: ActivationCode, filter: ActivatedTimeFil
 }
 
 export default function ActivationCodesPage() {
+  const router = useRouter()
   const [allCodes, setAllCodes] = useState<ActivationCode[]>([])
+  const [roleChecked, setRoleChecked] = useState(false)
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [durationFilter, setDurationFilter] = useState<DurationFilter>('all')
@@ -127,8 +131,34 @@ export default function ActivationCodesPage() {
   }, [])
 
   useEffect(() => {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (!token) {
+      router.replace('/home')
+      return
+    }
+
+    fetch('/api/auth/profile', {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+      .then(async (res) => {
+        const data = await res.json()
+        if (data?.data?.username !== 'kongdx') {
+          router.replace('/home')
+          return
+        }
+
+        setRoleChecked(true)
+      })
+      .catch(() => {
+        router.replace('/home')
+      })
+  }, [router])
+
+  useEffect(() => {
+    if (!roleChecked) return
     fetchCodes()
-  }, [fetchCodes])
+  }, [fetchCodes, roleChecked])
 
   const openDatePicker = (field: DateFieldType) => {
     const currentValue = field === 'start' ? activatedStartDate : activatedEndDate
@@ -303,8 +333,17 @@ export default function ActivationCodesPage() {
   }
 
   const totalCount = allCodes.length
-  const usedCount = allCodes.filter((code) => code.status === 'used').length
+  const activeCount = allCodes.filter((code) => code.status === 'active').length
+  const expiredCount = allCodes.filter((code) => code.status === 'expired').length
   const unusedCount = allCodes.filter((code) => code.status === 'unused').length
+
+  if (!roleChecked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface">
+        <p className="text-sm text-on-surface/60">校验权限中...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-surface pb-20">
@@ -336,7 +375,8 @@ export default function ActivationCodesPage() {
           <div className="flex justify-around">
             {[
               { label: '总数', value: totalCount, color: 'text-primary' },
-              { label: '已使用', value: usedCount, color: 'text-tertiary' },
+              { label: '使用中', value: activeCount, color: 'text-[#43e97b]' },
+                { label: '已失效', value: expiredCount, color: 'text-[#f5576c]' },
               { label: '未使用', value: unusedCount, color: 'text-[#4facfe]' },
             ].map((item) => (
               <div key={item.label} className="text-center">
@@ -351,7 +391,7 @@ export default function ActivationCodesPage() {
       <div className="mb-4 px-6">
         <div className="rounded-2xl bg-white p-4 shadow-sm">
           <div className="space-y-3">
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="mb-2 text-xs font-medium text-on-surface/50">时效类型</p>
                 <select
@@ -448,12 +488,14 @@ export default function ActivationCodesPage() {
                   <div className="mt-1.5 flex items-center gap-2">
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-                        code.status === 'used'
-                          ? 'bg-surface-container-high text-on-surface/50'
-                          : 'bg-primary/10 text-primary'
+                        code.status === 'active'
+                          ? 'bg-[#43e97b]/10 text-[#43e97b]'
+                            : code.status === 'expired'
+                              ? 'bg-surface-container-high text-on-surface/50'
+                              : 'bg-primary/10 text-primary'
                       }`}
                     >
-                      {code.status === 'used' ? '已使用' : '未使用'}
+                      {code.status === 'active' ? '使用中' : code.status === 'expired' ? '已失效' : '未使用'}
                     </span>
                     <span className="text-[11px] text-on-surface/40">
                       {durationLabels[code.durationType] || code.durationType}
@@ -563,10 +605,10 @@ export default function ActivationCodesPage() {
                   <p className="mb-1 text-xs text-on-surface/50">状态</p>
                   <p
                     className={`text-sm font-bold ${
-                      selectedCode.status === 'used' ? 'text-on-surface/50' : 'text-primary'
+                      selectedCode.status === 'expired' ? 'text-on-surface/50' : selectedCode.status === 'active' ? 'text-[#43e97b]' : 'text-primary'
                     }`}
                   >
-                    {selectedCode.status === 'used' ? '已使用' : '未使用'}
+                    {selectedCode.status === 'active' ? '使用中' : selectedCode.status === 'expired' ? '已失效' : '未使用'}
                   </p>
                 </div>
                 <div className="rounded-xl bg-surface-container p-4">
