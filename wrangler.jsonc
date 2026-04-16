@@ -11,12 +11,6 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  "services": [
-    {
-      "binding": "WORKER_SELF_REFERENCE",
-      "service": "ielts-vocab"
-    }
-  ],
   // Add this block after you create D1:
   // "d1_databases": [
   //   {
