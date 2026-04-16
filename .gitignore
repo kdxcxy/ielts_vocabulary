@@ -3,10 +3,13 @@ node_modules/
 
 # Build output
 .next/
+.open-next/
+.wrangler/
 
 # Environment variables
 .env.local
 .env*.local
+.dev.vars
 
 # OS
 .DS_Store
