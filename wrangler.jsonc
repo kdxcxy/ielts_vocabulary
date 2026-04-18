@@ -11,12 +11,11 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  // Add this block after you create D1:
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "ielts-vocab-db",
-  //     "database_id": "replace-me-after-you-create-d1"
-  //   }
-  // ]
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ielts-vocab-db",
+      "database_id": "e62d5f8d-3cfb-4b35-9872-a88ca86bd7b4"
+    }
+  ]
 }
