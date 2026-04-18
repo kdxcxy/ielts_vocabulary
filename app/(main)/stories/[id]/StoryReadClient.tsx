@@ -1,9 +1,23 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { JSX } from 'react'
+import type { JSX, PointerEvent as ReactPointerEvent, UIEvent } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Brain, Mic, Pen, Play, RotateCcw, Square, Star, Volume2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import {
+  ArrowLeft,
+  BookOpen,
+  Brain,
+  ChevronLeft,
+  ChevronRight,
+  Mic,
+  Pen,
+  Play,
+  RotateCcw,
+  Square,
+  Star,
+  Volume2,
+} from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import { TOKEN_STORAGE_KEY } from '@/lib/constants'
 import {
@@ -28,6 +42,11 @@ type Story = {
   content: string
 }
 
+type StorySummary = {
+  id: number
+  title: string
+}
+
 type WordDetail = {
   word: string
   contextualTranslation: string
@@ -41,12 +60,21 @@ type WordDetail = {
 
 type RecordingState = 'idle' | 'recording' | 'recorded' | 'playing'
 
+const STORY_NAV_STORAGE_KEY = 'story-nav-pill-position'
+
 function parseDictionaryPhonetics(data: any) {
   return {
     phoneticUs: data?.phoneticUs || '',
     phoneticUk: data?.phoneticUk || '',
     audioUs: data?.audioUs || '',
     audioUk: data?.audioUk || '',
+  }
+}
+
+function getDefaultNavPosition(width: number, height: number, safeOffset: number) {
+  return {
+    x: Math.max(12, window.innerWidth - width - 16),
+    y: Math.max(120, window.innerHeight - height - safeOffset),
   }
 }
 
@@ -111,7 +139,9 @@ async function postLearningEvent(payload: {
 }
 
 export default function StoryReadClient({ storyId }: { storyId: string }) {
+  const router = useRouter()
   const [story, setStory] = useState<Story | null>(null)
+  const [stories, setStories] = useState<StorySummary[]>([])
   const [mode, setMode] = useState<Mode>('read')
   const [selectedWord, setSelectedWord] = useState<WordDetail | null>(null)
   const [bookmarked, setBookmarked] = useState(false)
@@ -125,6 +155,10 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [recordingDuration, setRecordingDuration] = useState(0)
   const [recordingError, setRecordingError] = useState('')
+  const [isNavDimmed, setIsNavDimmed] = useState(false)
+  const [isNavDragging, setIsNavDragging] = useState(false)
+  const [navDockSide, setNavDockSide] = useState<'left' | 'right' | null>(null)
+  const [navPosition, setNavPosition] = useState({ x: 0, y: 0 })
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const practiceAudioRef = useRef<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -135,6 +169,61 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
   const recordingChunksRef = useRef<Blob[]>([])
   const recordingTimerRef = useRef<number | null>(null)
   const playbackTimerRef = useRef<number | null>(null)
+  const navFadeTimerRef = useRef<number | null>(null)
+  const navPressTimerRef = useRef<number | null>(null)
+  const dragStateRef = useRef<{
+    pointerId: number
+    offsetX: number
+    offsetY: number
+    moved: boolean
+    started: boolean
+  } | null>(null)
+  const navWidth = 82
+  const navHeight = 42
+  const bottomNavSafeOffset = 104
+
+  const getViewportBounds = () => {
+    if (typeof window === 'undefined') {
+      return { maxX: 0, maxY: 0 }
+    }
+
+    return {
+      maxX: Math.max(12, window.innerWidth - navWidth - 12),
+      maxY: Math.max(12, window.innerHeight - navHeight - bottomNavSafeOffset),
+    }
+  }
+
+  const clampNavPosition = (x: number, y: number) => {
+    const { maxX, maxY } = getViewportBounds()
+    return {
+      x: Math.min(Math.max(12, x), maxX),
+      y: Math.min(Math.max(12, y), maxY),
+    }
+  }
+
+  const getDockedX = (side: 'left' | 'right' | null, fallbackX: number) => {
+    if (typeof window === 'undefined') return fallbackX
+    const peekWidth = 18
+    if (side === 'left') return peekWidth - navWidth
+    if (side === 'right') return window.innerWidth - peekWidth
+    return fallbackX
+  }
+
+  const persistNavPosition = (position: { x: number; y: number }, dockSide: 'left' | 'right' | null) => {
+    if (typeof window === 'undefined') return
+
+    try {
+      window.localStorage.setItem(
+        STORY_NAV_STORAGE_KEY,
+        JSON.stringify({
+          x: position.x,
+          y: position.y,
+          dockSide,
+          hasCustomPosition: true,
+        })
+      )
+    } catch {}
+  }
 
   const stopRecordingTimer = () => {
     if (recordingTimerRef.current !== null) {
@@ -149,6 +238,65 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
       playbackTimerRef.current = null
     }
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const defaultPosition = getDefaultNavPosition(navWidth, navHeight, bottomNavSafeOffset)
+
+    try {
+      const saved = window.localStorage.getItem(STORY_NAV_STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved) as {
+          x?: number
+          y?: number
+          dockSide?: 'left' | 'right' | null
+          hasCustomPosition?: boolean
+        }
+
+        const hasCustomPosition = Boolean(parsed.hasCustomPosition)
+        const savedDockSide = parsed.dockSide === 'left' || parsed.dockSide === 'right' ? parsed.dockSide : null
+
+        if (!hasCustomPosition || typeof parsed.y !== 'number' || parsed.y < 140) {
+          setNavDockSide(null)
+          setNavPosition(defaultPosition)
+          return
+        }
+
+        const clamped = clampNavPosition(
+          typeof parsed.x === 'number' ? parsed.x : defaultPosition.x,
+          parsed.y
+        )
+        setNavDockSide(savedDockSide)
+        setNavPosition({
+          x: savedDockSide ? getDockedX(savedDockSide, clamped.x) : clamped.x,
+          y: clamped.y,
+        })
+      } else {
+        setNavDockSide(null)
+        setNavPosition(defaultPosition)
+      }
+    } catch {
+      setNavDockSide(null)
+      setNavPosition(defaultPosition)
+    }
+
+    const handleResize = () => {
+      setNavPosition((current) => {
+        const clamped = clampNavPosition(
+          navDockSide ? getDockedX(navDockSide, current.x) : current.x,
+          current.y
+        )
+        return {
+          x: navDockSide ? getDockedX(navDockSide, clamped.x) : clamped.x,
+          y: clamped.y,
+        }
+      })
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [navDockSide])
 
   const stopPracticePlayback = () => {
     stopPlaybackTimer()
@@ -212,9 +360,10 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
       setStoryLoadError('')
 
       try {
-        const [storyRes, wordsRes] = await Promise.all([
+        const [storyRes, wordsRes, storiesRes] = await Promise.all([
           fetch(`/api/stories/${storyId}`, { cache: 'no-store' }),
           fetch(`/api/stories/${storyId}/words`, { cache: 'no-store' }),
+          fetch('/api/stories', { cache: 'no-store' }),
         ])
 
         if (!storyRes.ok) {
@@ -225,8 +374,13 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
           throw new Error('\u8bcd\u8868\u52a0\u8f7d\u5931\u8d25')
         }
 
+        if (!storiesRes.ok) {
+          throw new Error('\u6545\u4e8b\u5217\u8868\u52a0\u8f7d\u5931\u8d25')
+        }
+
         const storyData = await storyRes.json()
         const wordsData = await wordsRes.json()
+        const storiesData = await storiesRes.json()
 
         if (cancelled) return
 
@@ -249,6 +403,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
         })
 
         setStory(storyData.data)
+        setStories(Array.isArray(storiesData.data) ? storiesData.data : [])
         setWordDetails(nextDetails)
         void postLearningEvent({ storyId: Number(storyId) })
       } catch (error) {
@@ -279,6 +434,12 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
       stopRecordingTimer()
       releaseRecordingStream()
       revokeRecordingUrl()
+      if (navFadeTimerRef.current !== null) {
+        window.clearTimeout(navFadeTimerRef.current)
+      }
+      if (navPressTimerRef.current !== null) {
+        window.clearTimeout(navPressTimerRef.current)
+      }
     }
   }, [])
 
@@ -864,6 +1025,105 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
     })
   }
 
+  const currentStoryIndex = stories.findIndex((item) => item.id === Number(storyId))
+  const previousStory = currentStoryIndex > 0 ? stories[currentStoryIndex - 1] : null
+  const nextStory =
+    currentStoryIndex >= 0 && currentStoryIndex < stories.length - 1
+      ? stories[currentStoryIndex + 1]
+      : null
+
+  const navigateStory = (targetStoryId: number | undefined) => {
+    if (!targetStoryId) return
+    closeWordDetail()
+    router.push(`/stories/${targetStoryId}`)
+  }
+
+  const triggerNavDimmed = () => {
+    setIsNavDimmed(true)
+    if (navFadeTimerRef.current !== null) {
+      window.clearTimeout(navFadeTimerRef.current)
+    }
+    navFadeTimerRef.current = window.setTimeout(() => {
+      setIsNavDimmed(false)
+    }, 900)
+  }
+
+  const handleStoryScroll = (_event: UIEvent<HTMLDivElement>) => {
+    triggerNavDimmed()
+  }
+
+  const handleNavPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - navPosition.x,
+      offsetY: event.clientY - navPosition.y,
+      moved: false,
+      started: false,
+    }
+
+    if (navPressTimerRef.current !== null) {
+      window.clearTimeout(navPressTimerRef.current)
+    }
+
+    navPressTimerRef.current = window.setTimeout(() => {
+      const dragState = dragStateRef.current
+      if (!dragState || dragState.pointerId !== event.pointerId) return
+      dragState.started = true
+      setIsNavDragging(true)
+      setNavDockSide(null)
+      event.currentTarget.setPointerCapture(event.pointerId)
+    }, 220)
+  }
+
+  const handleNavPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const dragState = dragStateRef.current
+    if (!dragState || dragState.pointerId !== event.pointerId || !dragState.started) return
+
+    const next = clampNavPosition(
+      event.clientX - dragState.offsetX,
+      event.clientY - dragState.offsetY
+    )
+    dragState.moved = true
+    setNavPosition(next)
+  }
+
+  const handleNavPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const dragState = dragStateRef.current
+    if (!dragState || dragState.pointerId !== event.pointerId) return
+
+    if (navPressTimerRef.current !== null) {
+      window.clearTimeout(navPressTimerRef.current)
+      navPressTimerRef.current = null
+    }
+
+    if (!dragState.started) {
+      dragStateRef.current = null
+      return
+    }
+
+    event.currentTarget.releasePointerCapture(event.pointerId)
+    dragStateRef.current = null
+    setIsNavDragging(false)
+
+    const midpoint = typeof window !== 'undefined' ? window.innerWidth / 2 : 0
+    const nextDockSide = navPosition.x + navWidth / 2 < midpoint ? 'left' : 'right'
+    const dockedX = getDockedX(nextDockSide, navPosition.x)
+    const clamped = clampNavPosition(
+      nextDockSide === 'left' ? 12 : dockedX - 36,
+      navPosition.y
+    )
+
+    setNavDockSide(nextDockSide)
+    const nextPosition = {
+      x: getDockedX(nextDockSide, clamped.x),
+      y: clamped.y,
+    }
+    setNavPosition(nextPosition)
+    persistNavPosition(nextPosition, nextDockSide)
+  }
+
   if (loadingStory) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface">
@@ -930,7 +1190,7 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pt-2 pb-20">
+      <div className="flex-1 overflow-y-auto px-4 pt-2 pb-20" onScroll={handleStoryScroll}>
         <div className="rounded-2xl bg-surface-container-lowest p-6 text-base leading-loose text-on-surface shadow-sm">
           {parseContent(story.content)}
         </div>
@@ -992,6 +1252,42 @@ export default function StoryReadClient({ storyId }: { storyId: string }) {
           {toastMessage}
         </div>
       )}
+
+      <div
+        className={`fixed z-40 rounded-full bg-white/62 p-1.5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] ring-1 ring-white/80 backdrop-blur-lg transition-[opacity,transform,left] duration-300 ${
+          isNavDimmed && !isNavDragging ? 'scale-95 opacity-45' : 'opacity-100'
+        } ${isNavDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+        style={{
+          left: `${navPosition.x}px`,
+          top: `${navPosition.y}px`,
+        }}
+        onPointerDown={handleNavPointerDown}
+        onPointerMove={handleNavPointerMove}
+        onPointerUp={handleNavPointerUp}
+        onPointerCancel={handleNavPointerUp}
+      >
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => navigateStory(previousStory?.id)}
+            disabled={!previousStory}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:text-on-surface/25 disabled:hover:bg-transparent"
+            aria-label="上一篇"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div className="h-4 w-px bg-black/8" />
+          <button
+            type="button"
+            onClick={() => navigateStory(nextStory?.id)}
+            disabled={!nextStory}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:text-on-surface/25 disabled:hover:bg-transparent"
+            aria-label="下一篇"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
 
       <BottomNav />
     </div>

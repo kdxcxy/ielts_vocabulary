@@ -27,12 +27,15 @@ const DEFAULT_STATS: HomeStats = {
 export default function HomePage() {
   const [username, setUsername] = useState('学习者')
   const [stats, setStats] = useState<HomeStats>(DEFAULT_STATS)
+  const [resetting, setResetting] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
 
-  useEffect(() => {
+  async function loadHomeData() {
     const token = localStorage.getItem(TOKEN_STORAGE_KEY)
     if (!token) return
 
-    Promise.all([
+    try {
+      const [profileRes, statsRes] = await Promise.all([
       fetch('/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
@@ -41,28 +44,54 @@ export default function HomePage() {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       }),
-    ])
-      .then(async ([profileRes, statsRes]) => {
-        const profileData = profileRes.ok ? await profileRes.json() : null
-        const statsData = statsRes.ok ? await statsRes.json() : null
+      ])
+      const profileData = profileRes.ok ? await profileRes.json() : null
+      const statsData = statsRes.ok ? await statsRes.json() : null
 
-        if (profileData?.data?.username) {
-          setUsername(profileData.data.username)
-        }
+      if (profileData?.data?.username) {
+        setUsername(profileData.data.username)
+      }
 
-        if (statsData?.data) {
-          setStats({
-            learnedWords: Number(statsData.data.learnedWords || 0),
-            totalVocabulary: Number(statsData.data.totalVocabulary || 0),
-            progressPercent: Number(statsData.data.progressPercent || 0),
-            streakDays: Number(statsData.data.streakDays || 0),
-            completedStories: Number(statsData.data.completedStories || 0),
-            reviewCount: Number(statsData.data.reviewCount || 0),
-          })
-        }
-      })
-      .catch(() => {})
+      if (statsData?.data) {
+        setStats({
+          learnedWords: Number(statsData.data.learnedWords || 0),
+          totalVocabulary: Number(statsData.data.totalVocabulary || 0),
+          progressPercent: Number(statsData.data.progressPercent || 0),
+          streakDays: Number(statsData.data.streakDays || 0),
+          completedStories: Number(statsData.data.completedStories || 0),
+          reviewCount: Number(statsData.data.reviewCount || 0),
+        })
+      }
+    } catch {}
+  }
+
+  useEffect(() => {
+    loadHomeData()
   }, [])
+
+  async function handleResetStats() {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (!token || resetting) return
+
+    setResetting(true)
+    try {
+      const res = await fetch('/api/home-stats/reset', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (!res.ok) {
+        throw new Error('reset failed')
+      }
+
+      await loadHomeData()
+      setShowResetConfirm(false)
+    } catch {
+      window.alert('重置失败，请稍后再试')
+    } finally {
+      setResetting(false)
+    }
+  }
 
   const statCards = [
     {
@@ -149,8 +178,43 @@ export default function HomePage() {
           >
             复习收藏
           </Link>
+          <button
+            type="button"
+            onClick={() => setShowResetConfirm(true)}
+            disabled={resetting}
+            className="block w-full rounded-full border border-primary/20 bg-white py-4 text-center text-base font-medium text-primary disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {resetting ? '重置中...' : '重置统计'}
+          </button>
         </div>
       </div>
+
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[2rem] bg-white p-8 shadow-2xl">
+            <h3 className="text-lg font-bold text-on-surface">确认重置</h3>
+            <p className="mt-3 text-sm leading-7 text-on-surface/70">
+              重置后，学习进度、连续学习和完成故事会清空，收藏单词不会删除。
+            </p>
+            <div className="mt-8 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 rounded-full bg-surface-container py-3 text-sm font-medium text-on-surface/70"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={handleResetStats}
+                className="flex-1 rounded-full bg-gradient-to-r from-primary to-primary-container py-3 text-sm font-bold text-white"
+              >
+                确认重置
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

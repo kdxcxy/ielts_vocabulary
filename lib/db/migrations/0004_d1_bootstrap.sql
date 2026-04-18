@@ -94,7 +94,7 @@ INSERT INTO users (
 VALUES (
   1,
   'kongdx',
-  'ff4596a662ca50e14981830df8f1a89b5eb8f5d8ea03fe1895cb2b699b5b1d7a',
+  'e994906033c0efc562edaf207f070bafd8e548fc4c20f90924f7dbbf18f48790',
   'admin',
   1,
   NULL,
