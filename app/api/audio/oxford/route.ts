@@ -1,14 +1,14 @@
 import { NextRequest } from 'next/server'
-import { err } from '@/lib/api'
 import { isOxfordAudioUrl } from '@/lib/audio-url'
-
-export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url') || ''
 
   if (!isOxfordAudioUrl(url)) {
-    return err(400, 'invalid audio url')
+    return Response.json(
+      { code: 400, message: 'invalid audio url', data: null },
+      { status: 400 }
+    )
   }
 
   const response = await fetch(url, {
@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
   } as RequestInit & { cf?: { cacheEverything?: boolean; cacheTtl?: number } })
 
   if (!response.ok || !response.body) {
-    return err(response.status || 502, 'audio fetch failed')
+    return Response.json(
+      { code: response.status || 502, message: 'audio fetch failed', data: null },
+      { status: response.status || 502 }
+    )
   }
 
   return new Response(response.body, {
@@ -36,4 +39,3 @@ export async function GET(req: NextRequest) {
     },
   })
 }
-
