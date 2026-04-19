@@ -1,6 +1,7 @@
 import { ok, err } from '@/lib/api'
 import { resolveDictionaryDetail } from '@/lib/dictionary'
 import { normalizeOxfordWord } from '@/lib/oxford'
+import { proxifyAudioFields } from '@/lib/audio-url'
 
 const detailCache = new Map<string, Awaited<ReturnType<typeof resolveDictionaryDetail>>>()
 
@@ -14,7 +15,7 @@ export async function GET(
 
   const cached = detailCache.get(normalized)
   if (cached) {
-    return ok(cached)
+    return ok(proxifyAudioFields(cached))
   }
 
   const resolved = await resolveDictionaryDetail(normalized)
@@ -22,6 +23,7 @@ export async function GET(
     return err(404, 'dictionary detail not found')
   }
 
-  detailCache.set(normalized, resolved)
-  return ok(resolved)
+  const proxied = proxifyAudioFields(resolved)
+  detailCache.set(normalized, proxied)
+  return ok(proxied)
 }
