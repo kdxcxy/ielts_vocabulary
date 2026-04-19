@@ -53,7 +53,7 @@ export default function SupportPage() {
               </button>
             </div>
             <p className="mt-5 text-sm leading-6 text-on-surface/60">
-              如果你在登录、注册、背词、播放录音、收藏记录等功能中遇到问题，可以添加微信反馈。请简单描述你遇到的问题，最好附上截图，方便快速定位。
+              如果您在登录、注册、背词、播放录音、收藏记录等功能中遇到问题，可以添加微信反馈。请简单描述您遇到的问题，最好附上截图，方便快速定位。
             </p>
           </div>
         </section>
@@ -66,7 +66,7 @@ export default function SupportPage() {
             <div>
               <h2 className="text-base font-bold text-on-surface">反馈建议</h2>
               <p className="mt-1 text-sm leading-6 text-on-surface/60">
-                欢迎反馈词汇释义、故事内容、页面卡顿、发音播放等问题。你的反馈会帮助这个词汇花园变得更好用。
+                欢迎反馈使用过程中的问题，您的反馈会帮助这个词汇花园变得更好用。
               </p>
             </div>
           </div>
