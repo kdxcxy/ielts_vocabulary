@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { TOKEN_STORAGE_KEY } from '@/lib/constants'
 
 export default function RegisterPage() {
@@ -11,15 +12,27 @@ export default function RegisterPage() {
     activationCode: '',
   })
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const lockSubmitForFiveSeconds = () => {
+    setIsSubmitting(true)
+    window.setTimeout(() => setIsSubmitting(false), 5000)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
+
     setError('')
 
     if (form.password !== form.confirmPassword) {
       setError('两次密码不一致')
       return
     }
+
+    lockSubmitForFiveSeconds()
 
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -70,22 +83,42 @@ export default function RegisterPage() {
               className="w-full rounded-full bg-surface-container-high px-6 py-4 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
               required
             />
-            <input
-              type="password"
-              placeholder="请输入密码"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full rounded-full bg-surface-container-high px-6 py-4 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              required
-            />
-            <input
-              type="password"
-              placeholder="请再次输入密码"
-              value={form.confirmPassword}
-              onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-              className="w-full rounded-full bg-surface-container-high px-6 py-4 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="请输入密码"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="w-full rounded-full bg-surface-container-high px-6 py-4 pr-14 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-on-surface/45 transition-colors hover:text-primary"
+                aria-label={showPassword ? '隐藏密码' : '显示密码'}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="请再次输入密码"
+                value={form.confirmPassword}
+                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                className="w-full rounded-full bg-surface-container-high px-6 py-4 pr-14 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((value) => !value)}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-on-surface/45 transition-colors hover:text-primary"
+                aria-label={showConfirmPassword ? '隐藏密码' : '显示密码'}
+              >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
             <input
               type="text"
               placeholder="请输入激活码 SV-XXXX-XXXX-XXXX-XXXX"
@@ -96,9 +129,10 @@ export default function RegisterPage() {
             />
             <button
               type="submit"
-              className="mt-4 w-full rounded-full bg-gradient-to-r from-primary to-primary-container py-4 text-body-lg font-bold text-white transition-all hover:scale-[1.02] hover:shadow-2xl"
+              disabled={isSubmitting}
+              className="mt-4 w-full rounded-full bg-gradient-to-r from-primary to-primary-container py-4 text-body-lg font-bold text-white transition-all hover:scale-[1.02] hover:shadow-2xl disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:scale-100 disabled:hover:shadow-none"
             >
-              注册
+              {isSubmitting ? '请稍候...' : '注册'}
             </button>
           </form>
         </div>
