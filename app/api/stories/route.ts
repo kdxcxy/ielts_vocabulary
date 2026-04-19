@@ -10,5 +10,12 @@ export async function GET(req: NextRequest) {
     filtered = mockDb.stories.filter(s => s.categoryId === +categoryId)
   }
 
-  return ok(filtered)
+  return ok(
+    filtered.map((story) => ({
+      id: story.id,
+      title: story.title,
+      categoryId: story.categoryId,
+      wordCount: story.wordCount,
+    }))
+  )
 }

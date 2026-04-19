@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import { ChevronRight, Search } from 'lucide-react'
 
@@ -87,7 +88,7 @@ export default function StoriesPage() {
       <div className="flex-1 overflow-y-auto px-6 pb-20">
         <div className="space-y-3">
           {filtered.map((story, i) => (
-            <a
+            <Link
               key={story.id}
               href={`/stories/${story.id}`}
               className="block overflow-hidden rounded-2xl bg-surface-container-lowest shadow-sm transition-shadow hover:shadow-md"
@@ -106,7 +107,7 @@ export default function StoriesPage() {
                 </div>
                 <ChevronRight className="ml-2 h-5 w-5 flex-shrink-0 text-on-surface/30" />
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>
