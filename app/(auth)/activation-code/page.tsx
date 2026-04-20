@@ -1,7 +1,29 @@
+'use client'
+
 import Link from 'next/link'
-import { ArrowLeft, MessageCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowLeft, Copy, MessageCircle } from 'lucide-react'
 
 export default function ActivationCodePage() {
+  const wechatId = 'looplip'
+  const [toastMessage, setToastMessage] = useState('')
+
+  useEffect(() => {
+    if (!toastMessage) return
+
+    const timer = window.setTimeout(() => setToastMessage(''), 1800)
+    return () => window.clearTimeout(timer)
+  }, [toastMessage])
+
+  const copyWechatId = async () => {
+    try {
+      await navigator.clipboard.writeText(wechatId)
+      setToastMessage('复制成功')
+    } catch {
+      setToastMessage('复制失败，请手动复制')
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-[#fff0f6] via-surface to-surface-container-low px-6 py-8">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
@@ -25,7 +47,22 @@ export default function ActivationCodePage() {
           </div>
           <div className="space-y-4 text-center">
             <p className="text-sm tracking-[0.2em] text-on-surface/45">开发者微信</p>
-            <p className="text-3xl font-bold tracking-wide text-primary">looplip</p>
+            <button
+              type="button"
+              onClick={copyWechatId}
+              className="mx-auto flex items-center justify-center gap-3 rounded-full bg-primary/10 px-6 py-3 text-primary transition-transform active:scale-95"
+              aria-label="复制微信号 looplip"
+            >
+              <span className="text-3xl font-bold tracking-wide">{wechatId}</span>
+              <Copy className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={copyWechatId}
+              className="mx-auto inline-flex rounded-full bg-gradient-to-r from-primary to-primary-container px-5 py-3 text-sm font-bold text-white shadow-lg transition-transform active:scale-95"
+            >
+              复制
+            </button>
             <p className="text-base leading-7 text-on-surface/70">请添加开发者微信获取激活码</p>
           </div>
         </div>
@@ -40,6 +77,12 @@ export default function ActivationCodePage() {
           </Link>
         </div>
       </div>
+
+      {toastMessage && (
+        <div className="fixed left-1/2 top-6 z-50 -translate-x-1/2 rounded-full bg-on-surface px-4 py-2 text-sm font-medium text-white shadow-lg">
+          {toastMessage}
+        </div>
+      )}
     </div>
   )
 }
