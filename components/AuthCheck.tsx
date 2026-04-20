@@ -12,7 +12,7 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-    const publicPaths = ['/login', '/register']
+    const publicPaths = ['/login', '/register', '/activation-code']
     const isPublicPath = publicPaths.includes(pathname)
 
     if (!token && !isPublicPath) {
