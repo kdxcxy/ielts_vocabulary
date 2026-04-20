@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { TOKEN_STORAGE_KEY } from '@/lib/constants'
@@ -44,7 +45,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-12 text-center">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-container shadow-xl">
-            <span className="text-5xl">🌭</span>
+            <span className="text-5xl">🌟</span>
           </div>
           <h1 className="mb-2 bg-gradient-to-r from-primary to-primary-container bg-clip-text text-display-md font-bold text-transparent">
             雅思词汇花园
@@ -95,11 +96,15 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-8 text-center text-body-lg text-on-surface/70">
-          还没有账号？
-          <a href="/register" className="ml-2 font-bold text-primary">
+        <p className="mt-8 flex items-center justify-center gap-3 text-center text-body-lg text-on-surface/70">
+          <span>还没有账号？</span>
+          <Link href="/register" className="font-bold text-primary">
             立即注册
-          </a>
+          </Link>
+          <span className="text-on-surface/25">|</span>
+          <Link href="/activation-code" className="font-bold text-primary">
+            获取激活码
+          </Link>
         </p>
       </div>
     </div>
