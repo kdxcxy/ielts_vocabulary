@@ -96,7 +96,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-8 flex items-center justify-center gap-3 text-center text-body-lg text-on-surface/70">
+        <p className="mt-8 flex items-center justify-center gap-3 text-center text-body-lg text-on-surface/70" style={{"paddingBottom": "25px"}}>
           <span>还没有账号？</span>
           <Link href="/register" className="font-bold text-primary">
             立即注册
