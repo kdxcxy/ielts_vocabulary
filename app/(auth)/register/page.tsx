@@ -5,6 +5,8 @@ import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { TOKEN_STORAGE_KEY } from '@/lib/constants'
 
+const USERNAME_PATTERN = /^[A-Za-z0-9]+$/
+
 export default function RegisterPage() {
   const [form, setForm] = useState({
     username: '',
@@ -33,13 +35,18 @@ export default function RegisterPage() {
       return
     }
 
+    if (!USERNAME_PATTERN.test(form.username.trim())) {
+      setError('用户名只能包含英文或英文+数字')
+      return
+    }
+
     lockSubmitForFiveSeconds()
 
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        username: form.username,
+        username: form.username.trim(),
         password: form.password,
         activationCode: form.activationCode,
       }),
@@ -78,9 +85,14 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
-              placeholder="请输入用户名"
+              placeholder="请输入英文或英文+数字用户名"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
+              inputMode="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              pattern="[A-Za-z0-9]+"
               className="w-full rounded-full bg-surface-container-high px-6 py-4 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
               required
             />
