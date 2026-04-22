@@ -22,12 +22,23 @@ export default function LoginPage() {
     if (isSubmitting) return
 
     setError('')
+
+    if (!username.trim()) {
+      setError('请输入账号')
+      return
+    }
+
+    if (!password) {
+      setError('请输入密码')
+      return
+    }
+
     lockSubmitForFiveSeconds()
 
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username: username.trim(), password }),
     })
     const data = await res.json()
 
@@ -59,14 +70,13 @@ export default function LoginPage() {
               {error}
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form noValidate onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="请输入用户名"
               className="w-full rounded-full bg-surface-container-high px-6 py-4 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              required
             />
             <div className="relative">
               <input
@@ -75,7 +85,6 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="请输入密码"
                 className="w-full rounded-full bg-surface-container-high px-6 py-4 pr-14 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                required
               />
               <button
                 type="button"

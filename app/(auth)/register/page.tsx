@@ -30,6 +30,26 @@ export default function RegisterPage() {
 
     setError('')
 
+    if (!form.username.trim()) {
+      setError('请输入账号')
+      return
+    }
+
+    if (!form.password) {
+      setError('请输入密码')
+      return
+    }
+
+    if (!form.confirmPassword) {
+      setError('请输入确认密码')
+      return
+    }
+
+    if (!form.activationCode.trim()) {
+      setError('请输入激活码')
+      return
+    }
+
     if (form.password !== form.confirmPassword) {
       setError('两次密码不一致')
       return
@@ -48,7 +68,7 @@ export default function RegisterPage() {
       body: JSON.stringify({
         username: form.username.trim(),
         password: form.password,
-        activationCode: form.activationCode,
+        activationCode: form.activationCode.trim(),
       }),
     })
     const data = await res.json()
@@ -82,7 +102,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form noValidate onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
               placeholder="请输入英文或英文+数字用户名"
@@ -92,9 +112,7 @@ export default function RegisterPage() {
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              pattern="[A-Za-z0-9]+"
               className="w-full rounded-full bg-surface-container-high px-6 py-4 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              required
             />
             <div className="relative">
               <input
@@ -103,7 +121,6 @@ export default function RegisterPage() {
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="w-full rounded-full bg-surface-container-high px-6 py-4 pr-14 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                required
               />
               <button
                 type="button"
@@ -121,7 +138,6 @@ export default function RegisterPage() {
                 value={form.confirmPassword}
                 onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
                 className="w-full rounded-full bg-surface-container-high px-6 py-4 pr-14 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                required
               />
               <button
                 type="button"
@@ -138,7 +154,6 @@ export default function RegisterPage() {
               value={form.activationCode}
               onChange={(e) => setForm({ ...form, activationCode: e.target.value })}
               className="w-full rounded-full bg-surface-container-high px-6 py-4 text-body-lg text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              required
             />
             <button
               type="submit"
